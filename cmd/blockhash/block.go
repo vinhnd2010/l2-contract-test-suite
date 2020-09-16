@@ -2,11 +2,9 @@ package main
 
 import (
 	"crypto/rand"
+	"encoding/binary"
 	"encoding/json"
 	"io/ioutil"
-	// "time"
-	"encoding/binary"
-	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -30,7 +28,7 @@ type SubmitBlockTestSuit struct {
 type miniBlock struct {
 	StateHash  common.Hash
 	Commitment common.Hash
-	Txs        []byte
+	Txs        [][]byte
 }
 
 func main() {
@@ -122,6 +120,6 @@ func generateMiniBlock() (common.Hash, miniBlock) {
 	return miniBlockHash, miniBlock{
 		StateHash:  stateHash,
 		Commitment: commitment,
-		Txs:        txRoot,
+		Txs:        txs,
 	}
 }
