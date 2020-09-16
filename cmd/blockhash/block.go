@@ -4,6 +4,8 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"io/ioutil"
+	// "time"
+	"encoding/binary"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -13,20 +15,49 @@ const output = "testdata/merkleTxsRoot.json"
 
 type MerkleTxsRootTestSuit struct {
 	MiniBlockHashes       []common.Hash
+	BlockParams           []common.Hash
 	ExpectedBlockInfoHash common.Hash
+}
+
+type SubmitBlockTestSuit struct {
+	TimeStamp            uint32
+	BlockNumber          uint32
+	MiniBlocks           []byte
+	ExpectedNewBlockRoot common.Hash
+}
+
+type miniBlock struct {
+	stateHash  common.Hash
+	commitment common.Hash
+	txs        []byte
 }
 
 func main() {
 	var err error
-	var testSuits []MerkleTxsRootTestSuit
+	var testSuits []SubmitBlockTestSuit
+	var miniBlockHashes []common.Hash
 	for _, miniBlockLen := range []int{1, 2, 3, 4, 5} {
-		testSuit := MerkleTxsRootTestSuit{MiniBlockHashes: make([]common.Hash, miniBlockLen)}
+		// testSuit := MerkleTxsRootTestSuit{MiniBlockHashes: make([]common.Hash, miniBlockLen)}
+		var miniBlocks []miniBlock
+
 		for i := 0; i < miniBlockLen; i++ {
-			if testSuit.MiniBlockHashes[i], err = generateRandomHash(); err != nil {
-				panic(err)
-			}
+			miniBlockHash, miniBlock := generateMiniBlock()
+			miniBlockHashes = append(miniBlockHashes, miniBlockHash)
+			miniBlocks = append(miniBlocks, miniBlock)
 		}
-		testSuit.ExpectedBlockInfoHash = getMiniBlockHash(testSuit.MiniBlockHashes)[0]
+
+		blockInfoHash := getMiniBlockHash(miniBlockHashes)[0]
+		prevBlockRoot := common.HexToHash("0x0")
+		blockNumber := uint32(1)
+		blockTime := uint32(1600237638)
+		blockRoot := crypto.Keccak256(prevBlockRoot.Bytes(), blockInfoHash.Bytes(), uint32ToBytes(blockNumber), uint32ToBytes(blockTime), miniBlocks[miniBlockLen].stateHash.Bytes())
+		testSuit := SubmitBlockTestSuit{
+			BlockNumber:          blockNumber,
+			TimeStamp:            blockTime,
+			MiniBlocks:           miniBlocks,
+			ExpectedNewBlockRoot: blockRoot,
+		}
+
 		testSuits = append(testSuits, testSuit)
 	}
 
@@ -37,6 +68,12 @@ func main() {
 	if err := ioutil.WriteFile(output, b, 0644); err != nil {
 		panic(err)
 	}
+}
+
+func uint32ToBytes(number uint32) []byte {
+	out := make([]byte, 4)
+	binary.LittleEndian.PutUint32(out, number)
+	return out
 }
 
 func generateRandomHash() (common.Hash, error) {
@@ -60,4 +97,27 @@ func getMiniBlockHash(miniBlocks []common.Hash) []common.Hash {
 		newMiniBlocks = append(newMiniBlocks, miniBlock)
 	}
 	return getMiniBlockHash(newMiniBlocks)
+}
+
+func generateMiniBlock() (common.Hash, miniBlock) {
+	var txs [][]byte
+	for i := 0; i <= 20; i++ {
+		txs = append(txs, make([]byte, 6))
+	}
+	txRoot := crypto.Keccak256(txs...)
+
+	var stateHash, commitment common.Hash
+	if stateHash, err := generateRandomHash(); err != nil {
+		panic(err)
+	}
+	if commitment, err := generateRandomHash(); err != nil {
+		panic(err)
+	}
+
+	miniBlockHash := crypto.Keccak256Hash(commitment.Bytes(), stateHash.Bytes(), txRoot)
+	return miniBlockHash, miniBlock{
+		stateHash:  stateHash,
+		commitment: commitment,
+		txs:        txRoot,
+	}
 }
