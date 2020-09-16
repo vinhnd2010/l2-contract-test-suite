@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	// "time"
 	"encoding/binary"
+	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -27,9 +28,9 @@ type SubmitBlockTestSuit struct {
 }
 
 type miniBlock struct {
-	stateHash  common.Hash
-	commitment common.Hash
-	txs        []byte
+	StateHash  common.Hash
+	Commitment common.Hash
+	Txs        []byte
 }
 
 func main() {
@@ -51,14 +52,13 @@ func main() {
 		blockNumber := uint32(1)
 		blockTime := uint32(1600237638)
 		blockRoot := crypto.Keccak256(prevBlockRoot.Bytes(), blockInfoHash.Bytes(), uint32ToBytes(blockTime),
-			uint32ToBytes(blockNumber), uint32ToBytes(uint32(miniBlockLen)), miniBlocks[miniBlockLen-1].stateHash.Bytes())
+			uint32ToBytes(blockNumber), uint32ToBytes(uint32(miniBlockLen)), miniBlocks[miniBlockLen-1].StateHash.Bytes())
 		testSuit := SubmitBlockTestSuit{
 			BlockNumber:          blockNumber,
 			TimeStamp:            blockTime,
 			MiniBlocks:           miniBlocks,
 			ExpectedNewBlockRoot: blockRoot,
 		}
-
 		testSuits = append(testSuits, testSuit)
 	}
 
@@ -120,8 +120,8 @@ func generateMiniBlock() (common.Hash, miniBlock) {
 
 	miniBlockHash := crypto.Keccak256Hash(commitment.Bytes(), stateHash.Bytes(), txRoot)
 	return miniBlockHash, miniBlock{
-		stateHash:  stateHash,
-		commitment: commitment,
-		txs:        txRoot,
+		StateHash:  stateHash,
+		Commitment: commitment,
+		Txs:        txRoot,
 	}
 }
