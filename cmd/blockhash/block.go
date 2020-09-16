@@ -8,6 +8,7 @@ import (
 	"encoding/binary"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
@@ -22,7 +23,7 @@ type SubmitBlockTestSuit struct {
 	TimeStamp            uint32
 	BlockNumber          uint32
 	MiniBlocks           []miniBlock
-	ExpectedNewBlockRoot []byte
+	ExpectedNewBlockRoot hexutil.Bytes
 }
 
 type miniBlock struct {
