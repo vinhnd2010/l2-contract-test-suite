@@ -15,15 +15,14 @@ const output = "testdata/merkleTxsRoot.json"
 
 type MerkleTxsRootTestSuit struct {
 	MiniBlockHashes       []common.Hash
-	BlockParams           []common.Hash
 	ExpectedBlockInfoHash common.Hash
 }
 
 type SubmitBlockTestSuit struct {
 	TimeStamp            uint32
 	BlockNumber          uint32
-	MiniBlocks           []byte
-	ExpectedNewBlockRoot common.Hash
+	MiniBlocks           []miniBlock
+	ExpectedNewBlockRoot []byte
 }
 
 type miniBlock struct {
@@ -50,7 +49,8 @@ func main() {
 		prevBlockRoot := common.HexToHash("0x0")
 		blockNumber := uint32(1)
 		blockTime := uint32(1600237638)
-		blockRoot := crypto.Keccak256(prevBlockRoot.Bytes(), blockInfoHash.Bytes(), uint32ToBytes(blockNumber), uint32ToBytes(blockTime), miniBlocks[miniBlockLen].stateHash.Bytes())
+		blockRoot := crypto.Keccak256(prevBlockRoot.Bytes(), blockInfoHash.Bytes(), uint32ToBytes(blockTime),
+			uint32ToBytes(blockNumber), uint32ToBytes(uint32(miniBlockLen)), miniBlocks[miniBlockLen-1].stateHash.Bytes())
 		testSuit := SubmitBlockTestSuit{
 			BlockNumber:          blockNumber,
 			TimeStamp:            blockTime,
@@ -101,16 +101,19 @@ func getMiniBlockHash(miniBlocks []common.Hash) []common.Hash {
 
 func generateMiniBlock() (common.Hash, miniBlock) {
 	var txs [][]byte
-	for i := 0; i <= 20; i++ {
+	for i := 0; i < 20; i++ {
 		txs = append(txs, make([]byte, 6))
 	}
 	txRoot := crypto.Keccak256(txs...)
 
 	var stateHash, commitment common.Hash
-	if stateHash, err := generateRandomHash(); err != nil {
+
+	stateHash, err := generateRandomHash()
+	if err != nil {
 		panic(err)
 	}
-	if commitment, err := generateRandomHash(); err != nil {
+	commitment, err = generateRandomHash()
+	if err != nil {
 		panic(err)
 	}
 
