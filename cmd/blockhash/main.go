@@ -1,7 +1,6 @@
 package main
 
 import (
-	"crypto/rand"
 	"encoding/binary"
 	"encoding/json"
 	"io/ioutil"
@@ -9,9 +8,11 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
+
+	util "github.com/KyberNetwork/l2-contract-test-suite/common"
 )
 
-const output = "testdata/merkleTxsRoot.json"
+const output = "../testdata/submitBlock.json"
 
 type MerkleTxsRootTestSuit struct {
 	MiniBlockHashes       []common.Hash
@@ -45,7 +46,7 @@ func main() {
 			miniBlocks = append(miniBlocks, miniBlock)
 		}
 
-		blockInfoHash := getMiniBlockHash(miniBlockHashes)[0]
+		blockInfoHash := util.GetMiniBlockHash(miniBlockHashes)[0]
 		prevBlockRoot := common.HexToHash("0x0")
 		blockNumber := uint32(1)
 		blockTime := uint32(1600237638)
@@ -75,29 +76,6 @@ func uint32ToBytes(number uint32) []byte {
 	return out
 }
 
-func generateRandomHash() (common.Hash, error) {
-	var out common.Hash
-	_, err := rand.Read(out[:])
-	return out, err
-}
-
-func getMiniBlockHash(miniBlocks []common.Hash) []common.Hash {
-	if len(miniBlocks) == 1 {
-		return miniBlocks
-	}
-	var newMiniBlocks []common.Hash
-	for i := 0; i < len(miniBlocks); i += 2 {
-		var miniBlock common.Hash
-		if i+1 == len(miniBlocks) {
-			miniBlock = crypto.Keccak256Hash(miniBlocks[i].Bytes(), common.HexToHash("0x0").Bytes())
-		} else {
-			miniBlock = crypto.Keccak256Hash(miniBlocks[i].Bytes(), miniBlocks[i+1].Bytes())
-		}
-		newMiniBlocks = append(newMiniBlocks, miniBlock)
-	}
-	return getMiniBlockHash(newMiniBlocks)
-}
-
 func generateMiniBlock() (common.Hash, miniBlock) {
 	var txs [][]byte
 	for i := 0; i < 20; i++ {
@@ -107,11 +85,11 @@ func generateMiniBlock() (common.Hash, miniBlock) {
 
 	var stateHash, commitment common.Hash
 
-	stateHash, err := generateRandomHash()
+	stateHash, err := util.GenerateRandomHash()
 	if err != nil {
 		panic(err)
 	}
-	commitment, err = generateRandomHash()
+	commitment, err = util.GenerateRandomHash()
 	if err != nil {
 		panic(err)
 	}
