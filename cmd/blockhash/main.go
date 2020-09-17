@@ -22,7 +22,7 @@ type MerkleTxsRootTestSuit struct {
 type SubmitBlockTestSuit struct {
 	TimeStamp            uint32
 	BlockNumber          uint32
-	MiniBlocks           []miniBlock
+	MiniBlocks           hexutil.Bytes
 	ExpectedNewBlockRoot hexutil.Bytes
 }
 
@@ -39,11 +39,13 @@ func main() {
 	for _, miniBlockLen := range []int{1, 2, 3, 4, 5} {
 		// testSuit := MerkleTxsRootTestSuit{MiniBlockHashes: make([]common.Hash, miniBlockLen)}
 		var miniBlocks []miniBlock
+		var miniBlockTxsHashes [][]byte
 
 		for i := 0; i < miniBlockLen; i++ {
-			miniBlockHash, miniBlock := generateMiniBlock()
+			miniBlockHash, miniBlockTxsHash, miniBlockStruct := generateMiniBlock()
 			miniBlockHashes = append(miniBlockHashes, miniBlockHash)
-			miniBlocks = append(miniBlocks, miniBlock)
+			miniBlocks = append(miniBlocks, miniBlockStruct)
+			miniBlockTxsHashes = append(miniBlockTxsHashes, miniBlockTxsHash)
 		}
 
 		blockInfoHash := util.GetMiniBlockHash(miniBlockHashes)[0]
@@ -55,7 +57,7 @@ func main() {
 		testSuit := SubmitBlockTestSuit{
 			BlockNumber:          blockNumber,
 			TimeStamp:            blockTime,
-			MiniBlocks:           miniBlocks,
+			MiniBlocks:           crypto.Keccak256(miniBlockTxsHashes...),
 			ExpectedNewBlockRoot: blockRoot,
 		}
 		testSuits = append(testSuits, testSuit)
@@ -76,13 +78,8 @@ func uint32ToBytes(number uint32) []byte {
 	return out
 }
 
-func generateMiniBlock() (common.Hash, miniBlock) {
+func generateMiniBlock() (common.Hash, []byte, miniBlock) {
 	var txs [][]byte
-	for i := 0; i < 20; i++ {
-		txs = append(txs, make([]byte, 6))
-	}
-	txRoot := crypto.Keccak256(txs...)
-
 	var stateHash, commitment common.Hash
 
 	stateHash, err := util.GenerateRandomHash()
@@ -93,9 +90,15 @@ func generateMiniBlock() (common.Hash, miniBlock) {
 	if err != nil {
 		panic(err)
 	}
+	txs = append(txs, commitment.Bytes(), stateHash.Bytes())
+
+	for i := 0; i < 20; i++ {
+		txs = append(txs, make([]byte, 6))
+	}
+	txRoot := crypto.Keccak256(txs...)
 
 	miniBlockHash := crypto.Keccak256Hash(commitment.Bytes(), stateHash.Bytes(), txRoot)
-	return miniBlockHash, miniBlock{
+	return miniBlockHash, crypto.Keccak256(txs...), miniBlock{
 		StateHash:  stateHash,
 		Commitment: commitment,
 		Txs:        txs,
