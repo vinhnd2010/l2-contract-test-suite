@@ -12,7 +12,7 @@ import (
 	util "github.com/KyberNetwork/l2-contract-test-suite/common"
 )
 
-const output = "../testdata/submitBlock.json"
+const output = "testdata/submitBlock.json"
 
 type MerkleTxsRootTestSuit struct {
 	MiniBlockHashes       []common.Hash
@@ -22,7 +22,7 @@ type MerkleTxsRootTestSuit struct {
 type SubmitBlockTestSuit struct {
 	TimeStamp            uint32
 	BlockNumber          uint32
-	MiniBlocks           hexutil.Bytes
+	MiniBlocks           []hexutil.Bytes
 	ExpectedNewBlockRoot hexutil.Bytes
 }
 
@@ -39,13 +39,13 @@ func main() {
 	for _, miniBlockLen := range []int{1, 2, 3, 4, 5} {
 		// testSuit := MerkleTxsRootTestSuit{MiniBlockHashes: make([]common.Hash, miniBlockLen)}
 		var miniBlocks []miniBlock
-		var miniBlockTxsHashes [][]byte
+		var miniBlockDataArr []hexutil.Bytes
 
 		for i := 0; i < miniBlockLen; i++ {
-			miniBlockHash, miniBlockTxsHash, miniBlockStruct := generateMiniBlock()
+			miniBlockHash, miniBlockData, miniBlockStruct := generateMiniBlock()
 			miniBlockHashes = append(miniBlockHashes, miniBlockHash)
 			miniBlocks = append(miniBlocks, miniBlockStruct)
-			miniBlockTxsHashes = append(miniBlockTxsHashes, miniBlockTxsHash)
+			miniBlockDataArr = append(miniBlockDataArr, miniBlockData)
 		}
 
 		blockInfoHash := util.GetMiniBlockHash(miniBlockHashes)[0]
@@ -57,13 +57,13 @@ func main() {
 		testSuit := SubmitBlockTestSuit{
 			BlockNumber:          blockNumber,
 			TimeStamp:            blockTime,
-			MiniBlocks:           crypto.Keccak256(miniBlockTxsHashes...),
+			MiniBlocks:           miniBlockDataArr,
 			ExpectedNewBlockRoot: blockRoot,
 		}
 		testSuits = append(testSuits, testSuit)
 	}
 
-	b, err := json.Marshal(testSuits)
+	b, err := json.MarshalIndent(testSuits, "", "  ")
 	if err != nil {
 		panic(err)
 	}
@@ -79,7 +79,7 @@ func uint32ToBytes(number uint32) []byte {
 }
 
 func generateMiniBlock() (common.Hash, []byte, miniBlock) {
-	var txs [][]byte
+	var txs []byte
 	var stateHash, commitment common.Hash
 
 	stateHash, err := util.GenerateRandomHash()
@@ -90,17 +90,17 @@ func generateMiniBlock() (common.Hash, []byte, miniBlock) {
 	if err != nil {
 		panic(err)
 	}
-	txs = append(txs, commitment.Bytes(), stateHash.Bytes())
+	txs = append(txs, commitment.Bytes()...)
+	txs = append(txs, stateHash.Bytes()...)
 
 	for i := 0; i < 20; i++ {
-		txs = append(txs, make([]byte, 6))
+		txs = append(txs, make([]byte, 6)...)
 	}
-	txRoot := crypto.Keccak256(txs...)
+	txRoot := crypto.Keccak256(txs)
 
 	miniBlockHash := crypto.Keccak256Hash(commitment.Bytes(), stateHash.Bytes(), txRoot)
-	return miniBlockHash, crypto.Keccak256(txs...), miniBlock{
+	return miniBlockHash, txs, miniBlock{
 		StateHash:  stateHash,
 		Commitment: commitment,
-		Txs:        txs,
 	}
 }
