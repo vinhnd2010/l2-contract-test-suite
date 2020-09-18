@@ -1,8 +1,9 @@
 package types
 
 import (
-	"github.com/vinhnd2010/l2-contract-test-suite/common"
 	"math/big"
+
+	"github.com/KyberNetwork/l2-contract-test-suite/common"
 )
 
 type OpType uint8

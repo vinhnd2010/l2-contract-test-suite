@@ -26,7 +26,7 @@ func main() {
 				panic(err)
 			}
 		}
-		testSuit.ExpectedBlockInfoHash = util.GetMiniBlockHash(testSuit.MiniBlockHashes)[0]
+		testSuit.ExpectedBlockInfoHash = util.GetMiniBlockHash(testSuit.MiniBlockHashes)
 		testSuits = append(testSuits, testSuit)
 	}
 

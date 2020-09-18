@@ -13,9 +13,9 @@ func GenerateRandomHash() (common.Hash, error) {
 	return out, err
 }
 
-func GetMiniBlockHash(miniBlocks []common.Hash) []common.Hash {
+func GetMiniBlockHash(miniBlocks []common.Hash) common.Hash {
 	if len(miniBlocks) == 1 {
-		return miniBlocks
+		return miniBlocks[0]
 	}
 	var newMiniBlocks []common.Hash
 	for i := 0; i < len(miniBlocks); i += 2 {
