@@ -9,7 +9,7 @@ import (
 	util "github.com/KyberNetwork/l2-contract-test-suite/common"
 )
 
-const output = "../testdata/merkleTxsRoot.json"
+const output = "testdata/merkleTxsRoot.json"
 
 type MerkleTxsRootTestSuit struct {
 	MiniBlockHashes       []common.Hash
