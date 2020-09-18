@@ -30,7 +30,7 @@ func main() {
 		testSuits = append(testSuits, testSuit)
 	}
 
-	b, err := json.Marshal(testSuits)
+	b, err := json.MarshalIndent(testSuits, "", "  ")
 	if err != nil {
 		panic(err)
 	}

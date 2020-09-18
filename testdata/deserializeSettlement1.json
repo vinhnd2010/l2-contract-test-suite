@@ -1,0 +1,22 @@
+[
+  {
+    "Data": "0x1004020000000e0000000f000000020e000000030d00000001120000000211004600875f631eb15f631eb200151800015181",
+    "Op": {
+      "OpType": 1,
+      "Token1": 1,
+      "Token2": 2,
+      "Account1": 14,
+      "Account2": 15,
+      "Rate1": "0xde0b6b3a7640000",
+      "Rate2": "0x2c68af0bb140000",
+      "Amount1": "0xb5e620f48000",
+      "Amount2": "0x1b48eb57e000",
+      "Fee1": "0xf4240",
+      "Fee2": "0x1312d00",
+      "ValidSince1": 1600331441,
+      "ValidSince2": 1600331442,
+      "ValidPeriod1": 86400,
+      "ValidPeriod2": 86401
+    }
+  }
+]
