@@ -102,9 +102,55 @@ func (s *Settlement1) ToBytes() []byte {
 
 	data1 := common.Uint32ToBytes(s.ValidPeriod1 << 4)
 	data2 := common.Uint32ToBytes(s.ValidPeriod2)
-	var tmp  byte = data1[3] | data2[0]
+	var tmp byte = data1[3] | data2[0]
 	out = append(out, data1[:3]...)
 	out = append(out, tmp)
 	out = append(out, data2[1:]...)
+	return out
+}
+
+type Settlement2 struct {
+	OpType      OpType
+	LeftoverID  uint64
+	AccountID   uint32
+	Amount1     Amount
+	Rate1       Amount
+	Fee1        Fee
+	ValidSince  uint32
+	ValidPeriod uint32
+}
+
+func (s *Settlement2) ToBytes() []byte {
+	var out []byte
+	// the first 6 bytes, 4 bit opType, 44 bits LeftOverID
+	head := uint64(0)
+	head = head | (uint64(s.OpType) << 44)
+	head = head | (uint64(s.LeftoverID))
+	out = append(out, common.Uint64ToBytes(head)[1:]...)
+	out = append(out, common.Uint32ToBytes(s.AccountID)...)
+	out = append(out, s.Amount1.toBytes()...)
+	out = append(out, s.Rate1.toBytes()...)
+	out = append(out, s.Fee1.toBytes()...)
+	out = append(out, common.Uint32ToBytes(s.ValidSince)...)
+
+	data := common.Uint32ToBytes(s.ValidPeriod)
+	out = append(out, data[:3]...)
+	return out
+}
+
+type Settlement3 struct {
+	OpType      OpType
+	LeftoverID1 uint64
+	LeftoverID2 uint64
+}
+
+func (s *Settlement3) ToBytes() []byte {
+	var out []byte
+	// the first 6 bytes, 4 bit opType, 44 bits LeftOverID1
+	head := uint64(0)
+	head = head | (uint64(s.OpType) << 44)
+	head = head | (uint64(s.LeftoverID1))
+	out = append(out, common.Uint64ToBytes(head)[1:]...)
+	out = append(out, common.Uint64ToBytes(s.LeftoverID2)...)
 	return out
 }

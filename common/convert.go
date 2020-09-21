@@ -26,3 +26,12 @@ func Uint16ToByte(i uint16) []byte {
 	}
 	return bur.Bytes()
 }
+
+func Uint64ToBytes(i uint64) []byte {
+	var bur bytes.Buffer
+	err := binary.Write(&bur, binary.BigEndian, &i)
+	if err != nil {
+		panic("Uint64ToBytes")
+	}
+	return bur.Bytes()
+}
