@@ -2,6 +2,8 @@ package common
 
 import (
 	"crypto/rand"
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -11,6 +13,23 @@ func GenerateRandomHash() (common.Hash, error) {
 	var out common.Hash
 	_, err := rand.Read(out[:])
 	return out, err
+}
+
+func GenerateRandomPubKey() hexutil.Bytes {
+	out := make(hexutil.Bytes, 64)
+	_, err := rand.Read(out[:])
+	if err != nil {
+		panic(err)
+	}
+	return out
+}
+
+func AddAmount(beforeValue common.Hash, value *big.Int) common.Hash {
+	return common.BigToHash(new(big.Int).Add(beforeValue.Big(), value))
+}
+
+func SubAmount(beforeValue common.Hash, value *big.Int) common.Hash {
+	return common.BigToHash(new(big.Int).Sub(beforeValue.Big(), value))
 }
 
 func GetMiniBlockHash(miniBlocks []common.Hash) common.Hash {

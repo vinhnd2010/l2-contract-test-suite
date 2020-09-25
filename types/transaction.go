@@ -6,6 +6,10 @@ import (
 	"github.com/KyberNetwork/l2-contract-test-suite/common"
 )
 
+type Transaction interface {
+	ToBytes() []byte
+}
+
 type OpType uint8
 
 const (
@@ -22,6 +26,10 @@ const (
 	Exit
 )
 
+var (
+	precision = new(big.Int).Exp(big.NewInt(10), big.NewInt(18), nil)
+)
+
 /// 10 bit for mantisa, 6 bit for
 type Fee struct {
 	Mantisa uint16
@@ -36,11 +44,15 @@ func (f *Fee) toBytes() []byte {
 	return common.Uint16ToByte(out)
 }
 
-func (f *Fee) MarshalText() ([]byte, error) {
+func (f *Fee) Big() *big.Int {
 	tmp := big.NewInt(int64(f.Exp))
 	tmp = new(big.Int).Exp(big.NewInt(10), tmp, nil)
 	tmp = new(big.Int).Mul(tmp, big.NewInt(int64(f.Mantisa)))
-	return []byte("0x" + tmp.Text(16)), nil
+	return tmp
+}
+
+func (f *Fee) MarshalText() ([]byte, error) {
+	return []byte("0x" + f.Big().Text(16)), nil
 }
 
 /// @dev 32 bits for mantisa, 8 bits for exp
@@ -56,11 +68,15 @@ func (a *Amount) toBytes() []byte {
 	return out
 }
 
-func (a *Amount) MarshalText() ([]byte, error) {
+func (a *Amount) Big() *big.Int {
 	tmp := big.NewInt(int64(a.Exp))
 	tmp = new(big.Int).Exp(big.NewInt(10), tmp, nil)
 	tmp = new(big.Int).Mul(tmp, big.NewInt(int64(a.Mantisa)))
-	return []byte("0x" + tmp.Text(16)), nil
+	return tmp
+}
+
+func (a *Amount) MarshalText() ([]byte, error) {
+	return []byte("0x" + a.Big().Text(16)), nil
 }
 
 type Settlement1 struct {
@@ -79,6 +95,76 @@ type Settlement1 struct {
 	ValidSince2  uint32
 	ValidPeriod1 uint32
 	ValidPeriod2 uint32
+}
+
+func calAmountOut(amount *big.Int, rate *big.Int) *big.Int {
+	return new(big.Int).Div(new(big.Int).Mul(amount, rate), precision)
+}
+
+func calAmountIn(amount *big.Int, rate *big.Int) *big.Int {
+	tmp := new(big.Int).Mul(amount, precision)
+	tmp = new(big.Int).Add(tmp, big.NewInt(1))
+	tmp = new(big.Int).Sub(tmp, rate)
+	return tmp.Div(tmp, rate)
+}
+
+func (s *Settlement1) GetSettlementValue() (amount1 *big.Int, amount2 *big.Int, fee1 *big.Int, fee2 *big.Int, loo *LeftOverOrder) {
+	var (
+		orderAmount1 = s.Amount1.Big()
+		orderRate1   = s.Rate1.Big()
+		orderAmount2 = s.Amount2.Big()
+		orderRate2   = s.Rate2.Big()
+	)
+
+	if s.ValidSince1 <= s.ValidSince2 {
+		amount2 = calAmountOut(orderAmount1, orderRate1)
+		if amount2.Cmp(orderAmount2) == 1 {
+			amount2.Set(orderAmount2)
+			amount1 = calAmountIn(orderAmount2, orderRate1)
+		} else {
+			amount1 = new(big.Int).Set(orderAmount1)
+		}
+	} else {
+		amount1 = calAmountOut(orderAmount2, orderRate2)
+		if amount1.Cmp(orderAmount1) == 1 {
+			amount1.Set(orderAmount1)
+			amount2 = calAmountIn(orderAmount1, orderAmount2)
+		} else {
+			amount2 = new(big.Int).Set(orderAmount2)
+		}
+	}
+
+	fee1 = s.Fee1.Big()
+	fee2 = s.Fee2.Big()
+
+	if amount1.Cmp(orderAmount1) < 0 { //left-over order at order1
+		fee1 = new(big.Int).Div(new(big.Int).Mul(s.Fee1.Big(), amount1), orderAmount1)
+		loo = &LeftOverOrder{
+			AccountID:   s.Account1,
+			SrcToken:    s.Token1,
+			DestToken:   s.Token2,
+			Amount:      new(big.Int).Sub(orderAmount1, amount1),
+			Rate:        orderRate1,
+			Fee:         new(big.Int).Sub(s.Fee1.Big(), fee1),
+			ValidSince:  s.ValidSince1,
+			ValidPeriod: s.ValidPeriod1,
+		}
+	}
+
+	if amount2.Cmp(orderAmount2) < 0 { //left-over order at order1
+		fee2 = new(big.Int).Div(new(big.Int).Mul(s.Fee2.Big(), amount2), orderAmount2)
+		loo = &LeftOverOrder{
+			AccountID:   s.Account2,
+			SrcToken:    s.Token2,
+			DestToken:   s.Token1,
+			Amount:      new(big.Int).Sub(orderAmount2, amount2),
+			Rate:        orderRate2,
+			Fee:         new(big.Int).Sub(s.Fee2.Big(), fee2),
+			ValidSince:  s.ValidSince2,
+			ValidPeriod: s.ValidPeriod2,
+		}
+	}
+	return
 }
 
 func (s *Settlement1) ToBytes() []byte {
