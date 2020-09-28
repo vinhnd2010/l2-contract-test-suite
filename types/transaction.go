@@ -3,10 +3,14 @@ package types
 import (
 	"math/big"
 
+	ethCommon "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
+
 	"github.com/KyberNetwork/l2-contract-test-suite/common"
 )
 
 type Transaction interface {
+	// ToBytes returns pubData, submit to blockchain
 	ToBytes() []byte
 }
 
@@ -239,4 +243,33 @@ func (s *Settlement3) ToBytes() []byte {
 	out = append(out, common.Uint64ToBytes(head)[1:]...)
 	out = append(out, common.Uint64ToBytes(s.LeftoverID2)...)
 	return out
+}
+
+type DepositOp struct {
+	DepositID uint64
+	AccountID uint32
+	TokenID   uint16
+	Amount    *big.Int
+}
+
+func (d *DepositOp) ToBytes() []byte {
+	head := uint64(0)
+	head = head | (uint64(Deposit) << 44)
+	head = head | (d.DepositID)
+	return common.Uint48ToBytes(head)
+}
+
+type DepositToNewOp struct {
+	DepositID  uint64
+	PubKey     hexutil.Bytes
+	WithdrawTo ethCommon.Address
+	TokenID    uint16
+	Amount     *big.Int
+}
+
+func (d *DepositToNewOp) ToBytes() []byte {
+	head := uint64(0)
+	head = head | (uint64(DepositToNew) << 44)
+	head = head | (d.DepositID)
+	return common.Uint48ToBytes(head)
 }

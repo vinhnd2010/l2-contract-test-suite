@@ -1,9 +1,10 @@
 package common
 
 import (
+	"testing"
+
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestUint48ToBytes(t *testing.T) {

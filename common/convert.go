@@ -5,6 +5,15 @@ import (
 	"encoding/binary"
 )
 
+func Uint16ToBytes(i uint16) []byte {
+	var bur bytes.Buffer
+	err := binary.Write(&bur, binary.BigEndian, &i)
+	if err != nil {
+		panic("Uint16ToBytes")
+	}
+	return bur.Bytes()
+}
+
 func Uint32ToBytes(i uint32) []byte {
 	var bur bytes.Buffer
 	err := binary.Write(&bur, binary.BigEndian, &i)
@@ -14,7 +23,7 @@ func Uint32ToBytes(i uint32) []byte {
 	return bur.Bytes()
 }
 
-func Uint48ToBytes(i uint64) []byte{
+func Uint48ToBytes(i uint64) []byte {
 	var bur bytes.Buffer
 	err := binary.Write(&bur, binary.BigEndian, &i)
 	if err != nil {

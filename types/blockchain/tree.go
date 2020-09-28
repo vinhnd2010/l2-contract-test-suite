@@ -111,6 +111,10 @@ func (n *node) update(key uint64, value common.Hash) {
 	n.value = GetRoot(n.leftHash(), n.rightHash())
 }
 
+//func GetRootTree(key uint64 , child common.Hash, siblings []common.Hash) common.Hash {
+//	for _, siblings.
+//}
+
 func GetRoot(left common.Hash, right common.Hash) common.Hash {
 	if left == common.HexToHash(zeroHash) && right == common.HexToHash(zeroHash) {
 		return common.HexToHash(zeroHash)
