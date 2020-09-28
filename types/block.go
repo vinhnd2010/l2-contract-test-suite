@@ -26,10 +26,15 @@ func (blk *MiniBlock) MarshalJSON() ([]byte, error) {
 }
 
 func (blk *MiniBlock) Hash() common.Hash {
+	txRoot := blk.TxRoot()
+	return crypto.Keccak256Hash(blk.Commitment.Bytes(), blk.StateHash.Bytes(), txRoot.Bytes())
+}
+
+func (blk *MiniBlock) TxRoot() common.Hash {
 	var txData hexutil.Bytes
 	for _, tx := range blk.Txs {
 		txData = append(txData, tx.ToBytes()...)
 	}
 	txRoot := crypto.Keccak256Hash(txData)
-	return crypto.Keccak256Hash(blk.Commitment.Bytes(), blk.StateHash.Bytes(), txRoot.Bytes())
+	return txRoot
 }

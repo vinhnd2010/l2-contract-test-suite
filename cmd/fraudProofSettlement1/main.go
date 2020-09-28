@@ -23,7 +23,7 @@ type FraudProofTestSuit struct {
 type BlockData struct {
 	MiniBlocks      []*types.MiniBlock
 	Timestamp       uint32
-	MiniBlockNumber uint
+	MiniBlockNumber int
 	Proof           *FraudProof
 }
 
@@ -129,9 +129,150 @@ func buildTest1() *FraudProofTestSuit {
 			ExecutionProof:     executionProofs,
 		},
 	}
-	blockData.Proof.MiniBlockProof = proof.BuildMiniBlockProof(blockData.MiniBlocks, blockData.MiniBlockNumber, blockData.Timestamp)
+	blockData.Proof.MiniBlockProof = proof.BuildMiniBlockProof(blockData.MiniBlocks, uint(blockData.MiniBlockNumber), blockData.Timestamp)
 	return &FraudProofTestSuit{
 		Msg:              "test case when left over order at order 2",
+		GenesisStateHash: genesisHash,
+		Blocks: []BlockData{
+			blockData,
+		},
+	}
+}
+
+func buildTestForSecondBlock() *FraudProofTestSuit {
+	bc := blockchain.NewBlockchain(genesis)
+	genesisHash := bc.GetStateData().Hash()
+	preStateData := bc.GetStateData()
+
+	miniBlock1 := &types.MiniBlock{Txs: nil}
+	bc.AddMiniBlock(miniBlock1)
+
+	blockData1 := BlockData{
+		MiniBlocks:      []*types.MiniBlock{miniBlock1},
+		Timestamp:       1600661870,
+		MiniBlockNumber: -1,
+	}
+
+	miniBlock2 := &types.MiniBlock{
+		Txs: []types.Transaction{
+			&types.Settlement1{
+				OpType:   types.SettlementOp11,
+				Token1:   1,
+				Token2:   2,
+				Account1: 8,
+				Account2: 12,
+				Rate1: types.Amount{
+					Mantisa: 1,
+					Exp:     18,
+				},
+				Rate2: types.Amount{
+					Mantisa: 1,
+					Exp:     18,
+				},
+				Amount1: types.Amount{
+					Mantisa: 2,
+					Exp:     6,
+				},
+				Amount2: types.Amount{
+					Mantisa: 3,
+					Exp:     6,
+				},
+				Fee1: types.Fee{
+					Mantisa: 7,
+					Exp:     3,
+				},
+				Fee2: types.Fee{
+					Mantisa: 4,
+					Exp:     2,
+				},
+				ValidSince1:  1600661872,
+				ValidSince2:  1600661873,
+				ValidPeriod1: 86400,
+				ValidPeriod2: 86400,
+			},
+		},
+	}
+	executionProofs := bc.AddMiniBlock(miniBlock2)
+	blockData2 := BlockData{
+		MiniBlocks:      []*types.MiniBlock{miniBlock2},
+		Timestamp:       1600661872,
+		MiniBlockNumber: 0,
+		Proof: &FraudProof{
+			PrevStateData:      preStateData,
+			PrevStateHashProof: proof.BuildFinalStateHashProof(blockData1.MiniBlocks, blockData1.Timestamp),
+			ExecutionProof:     executionProofs,
+		},
+	}
+	blockData2.Proof.MiniBlockProof = proof.BuildMiniBlockProof(blockData2.MiniBlocks, uint(blockData2.MiniBlockNumber), blockData2.Timestamp)
+	return &FraudProofTestSuit{
+		Msg:              "test case when miniBlock is at block number = 2",
+		GenesisStateHash: genesisHash,
+		Blocks:           []BlockData{blockData1, blockData2},
+	}
+}
+
+func buildTestForSecondMiniBlock() *FraudProofTestSuit {
+	bc := blockchain.NewBlockchain(genesis)
+	genesisHash := bc.GetStateData().Hash()
+
+	miniBlock1 := &types.MiniBlock{Txs: nil}
+	bc.AddMiniBlock(miniBlock1)
+
+	preStateData := bc.GetStateData()
+	miniBlock2 := &types.MiniBlock{
+		Txs: []types.Transaction{
+			&types.Settlement1{
+				OpType:   types.SettlementOp11,
+				Token1:   1,
+				Token2:   2,
+				Account1: 8,
+				Account2: 12,
+				Rate1: types.Amount{
+					Mantisa: 1,
+					Exp:     18,
+				},
+				Rate2: types.Amount{
+					Mantisa: 1,
+					Exp:     18,
+				},
+				Amount1: types.Amount{
+					Mantisa: 2,
+					Exp:     6,
+				},
+				Amount2: types.Amount{
+					Mantisa: 3,
+					Exp:     6,
+				},
+				Fee1: types.Fee{
+					Mantisa: 7,
+					Exp:     3,
+				},
+				Fee2: types.Fee{
+					Mantisa: 4,
+					Exp:     2,
+				},
+				ValidSince1:  1600661872,
+				ValidSince2:  1600661873,
+				ValidPeriod1: 86400,
+				ValidPeriod2: 86400,
+			},
+		},
+	}
+	executionProofs := bc.AddMiniBlock(miniBlock2)
+
+	blockData := BlockData{
+		MiniBlocks:      []*types.MiniBlock{miniBlock1, miniBlock2},
+		Timestamp:       1600661872,
+		MiniBlockNumber: 1,
+		Proof: &FraudProof{
+			PrevStateData:      preStateData,
+			ExecutionProof:     executionProofs,
+		},
+	}
+	blockData.Proof.PrevStateHashProof = proof.BuildPrevStateHashMiniBlockProof(blockData.MiniBlocks, uint(blockData.MiniBlockNumber-1))
+	blockData.Proof.MiniBlockProof = proof.BuildMiniBlockProof(blockData.MiniBlocks, uint(blockData.MiniBlockNumber), blockData.Timestamp)
+	return &FraudProofTestSuit{
+		Msg:              "test case when mimiBlockNumber = 2",
 		GenesisStateHash: genesisHash,
 		Blocks: []BlockData{
 			blockData,
@@ -198,7 +339,7 @@ func buildTest2() *FraudProofTestSuit {
 			ExecutionProof:     executionProofs,
 		},
 	}
-	blockData.Proof.MiniBlockProof = proof.BuildMiniBlockProof(blockData.MiniBlocks, blockData.MiniBlockNumber, blockData.Timestamp)
+	blockData.Proof.MiniBlockProof = proof.BuildMiniBlockProof(blockData.MiniBlocks, uint(blockData.MiniBlockNumber), blockData.Timestamp)
 	return &FraudProofTestSuit{
 		Msg:              "test case with 25 orders",
 		GenesisStateHash: genesisHash,
@@ -211,7 +352,8 @@ func buildTest2() *FraudProofTestSuit {
 func main() {
 	var testSuits []*FraudProofTestSuit
 	testSuits = append(testSuits, buildTest1())
-	testSuits = append(testSuits, buildTest2())
+	testSuits = append(testSuits, buildTestForSecondBlock())
+	testSuits = append(testSuits, buildTestForSecondMiniBlock())
 
 	b, err := json.MarshalIndent(testSuits, "", "  ")
 	if err != nil {

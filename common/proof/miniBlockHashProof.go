@@ -21,6 +21,18 @@ func BuildMiniBlockProof(miniBlocks []*types.MiniBlock, miniBlockIndex uint, tim
 	return proof
 }
 
+func BuildPrevStateHashMiniBlockProof(miniBlocks []*types.MiniBlock, miniBlockIndex uint) hexutil.Bytes {
+	var miniBlockHashes []common.Hash
+	for _, blk := range miniBlocks {
+		miniBlockHashes = append(miniBlockHashes, blk.Hash())
+	}
+	var proof hexutil.Bytes
+	proof = append(proof, miniBlocks[miniBlockIndex].Commitment.Bytes()...)
+	proof = append(proof, miniBlocks[miniBlockIndex].TxRoot().Bytes()...)
+	proof = append(proof, BuildBlockInfoProof(miniBlockHashes, miniBlockIndex)...)
+	return proof
+}
+
 func BuildBlockInfoProof(blks []common.Hash, miniBlockIndex uint) hexutil.Bytes {
 	var tmp []common.Hash
 	tmp = append(tmp, blks...)
@@ -50,5 +62,19 @@ func BuildBlockInfoProof(blks []common.Hash, miniBlockIndex uint) hexutil.Bytes 
 		count++
 	}
 	proof[0] = util.Uint8ToByte(count)
+	return proof
+}
+
+func BuildFinalStateHashProof(miniBlocks []*types.MiniBlock, timeStamp uint32) hexutil.Bytes {
+	var proof hexutil.Bytes
+	var miniBlockHashes []common.Hash
+	for _, blk := range miniBlocks {
+		miniBlockHashes = append(miniBlockHashes, blk.Hash())
+	}
+	blockInfoHash := util.GetMiniBlockHash(miniBlockHashes)
+
+	proof = append(proof, blockInfoHash.Bytes()...)
+	proof = append(proof, util.Uint32ToBytes(timeStamp)...)
+	proof = append(proof, util.Uint8ToByte(uint8(len(miniBlocks))))
 	return proof
 }
