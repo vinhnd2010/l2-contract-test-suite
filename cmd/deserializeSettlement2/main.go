@@ -21,22 +21,22 @@ func main() {
 	for _, settlement := range []types.Settlement2{
 		{
 			OpType:     types.SettlementOp21,
-			LeftoverID: 1,
-			AccountID:  14,
-			Amount1: types.Amount{
+			LooID1:     342462,
+			AccountID2: 14,
+			Amount2: types.Amount{
 				Mantisa: 2,
 				Exp:     14,
 			},
-			Rate1: types.Amount{
+			Rate2: types.Amount{
 				Mantisa: 1,
 				Exp:     18,
 			},
-			Fee1: types.Fee{
+			Fee2: types.Fee{
 				Mantisa: 2,
 				Exp:     7,
 			},
-			ValidSince:  1600331441,
-			ValidPeriod: 86400,
+			ValidSince2:  1600331441,
+			ValidPeriod2: 86400,
 		},
 	} {
 		testSuits = append(testSuits, DeserializeTestSuit{

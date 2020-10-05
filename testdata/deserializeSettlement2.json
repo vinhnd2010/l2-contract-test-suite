@@ -1,15 +1,15 @@
 [
   {
-    "Data": "0x0000010000000e000000020e000000011200875f631eb1000151",
+    "Data": "0x4000000539be0000000e000000020e000000011200875f631eb100151800",
     "Op": {
       "OpType": 4,
-      "LeftoverID": 1,
-      "AccountID": 14,
-      "Amount1": "0xb5e620f48000",
-      "Rate1": "0xde0b6b3a7640000",
-      "Fee1": "0x1312d00",
-      "ValidSince": 1600331441,
-      "ValidPeriod": 86400
+      "LooID1": 342462,
+      "AccountID2": 14,
+      "Amount2": "0xb5e620f48000",
+      "Rate2": "0xde0b6b3a7640000",
+      "Fee2": "0x1312d00",
+      "ValidSince2": 1600331441,
+      "ValidPeriod2": 86400
     }
   }
 ]

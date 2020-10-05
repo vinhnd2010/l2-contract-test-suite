@@ -9,6 +9,10 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
+var (
+	Precision = new(big.Int).Exp(big.NewInt(10), big.NewInt(18), nil)
+)
+
 func GenerateRandomHash() (common.Hash, error) {
 	var out common.Hash
 	_, err := rand.Read(out[:])
@@ -30,6 +34,17 @@ func AddAmount(beforeValue common.Hash, value *big.Int) common.Hash {
 
 func SubAmount(beforeValue common.Hash, value *big.Int) common.Hash {
 	return common.BigToHash(new(big.Int).Sub(beforeValue.Big(), value))
+}
+
+func CalAmountOut(amount *big.Int, rate *big.Int) *big.Int {
+	return new(big.Int).Div(new(big.Int).Mul(amount, rate), Precision)
+}
+
+func CalAmountIn(amount *big.Int, rate *big.Int) *big.Int {
+	tmp := new(big.Int).Mul(amount, Precision)
+	tmp = new(big.Int).Add(tmp, rate)
+	tmp = new(big.Int).Sub(tmp, big.NewInt(1))
+	return tmp.Div(tmp, rate)
 }
 
 func GetMiniBlockHash(miniBlocks []common.Hash) common.Hash {

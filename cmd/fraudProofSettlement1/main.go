@@ -14,6 +14,7 @@ import (
 )
 
 const output = "testdata/fraudProofSettlement1.json"
+const benchmarkOutput = "benchmarkdata/fraudProofSettlement1.json"
 
 type FraudProofTestSuit struct {
 	Msg              string
@@ -265,8 +266,8 @@ func buildTestForSecondMiniBlock() *FraudProofTestSuit {
 		Timestamp:       1600661872,
 		MiniBlockNumber: 1,
 		Proof: &FraudProof{
-			PrevStateData:      preStateData,
-			ExecutionProof:     executionProofs,
+			PrevStateData:  preStateData,
+			ExecutionProof: executionProofs,
 		},
 	}
 	blockData.Proof.PrevStateHashProof = proof.BuildPrevStateHashMiniBlockProof(blockData.MiniBlocks, uint(blockData.MiniBlockNumber-1))
@@ -286,7 +287,7 @@ func buildTest2() *FraudProofTestSuit {
 	preStateData := bc.GetStateData()
 
 	var txs []types.Transaction
-	for i := 0; i < 20; i++ {
+	for i := 0; i < 15; i++ {
 		txs = append(txs, &types.Settlement1{
 			OpType:   types.SettlementOp11,
 			Token1:   1,
@@ -341,7 +342,7 @@ func buildTest2() *FraudProofTestSuit {
 	}
 	blockData.Proof.MiniBlockProof = proof.BuildMiniBlockProof(blockData.MiniBlocks, uint(blockData.MiniBlockNumber), blockData.Timestamp)
 	return &FraudProofTestSuit{
-		Msg:              "test case with 25 orders",
+		Msg:              "test case with 15 orders",
 		GenesisStateHash: genesisHash,
 		Blocks: []BlockData{
 			blockData,
@@ -362,4 +363,15 @@ func main() {
 	if err := ioutil.WriteFile(output, b, 0644); err != nil {
 		panic(err)
 	}
+
+	var testSuits2 []*FraudProofTestSuit
+	testSuits2 = append(testSuits2, buildTest2())
+	b, err = json.MarshalIndent(testSuits2, "", "  ")
+	if err != nil {
+		panic(err)
+	}
+	if err := ioutil.WriteFile(benchmarkOutput, b, 0644); err != nil {
+		panic(err)
+	}
+
 }

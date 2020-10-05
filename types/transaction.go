@@ -72,7 +72,7 @@ func (a *Amount) toBytes() []byte {
 	return out
 }
 
-func (a *Amount) Big() *big.Int {
+func (a Amount) Big() *big.Int {
 	tmp := big.NewInt(int64(a.Exp))
 	tmp = new(big.Int).Exp(big.NewInt(10), tmp, nil)
 	tmp = new(big.Int).Mul(tmp, big.NewInt(int64(a.Mantisa)))
@@ -107,8 +107,8 @@ func calAmountOut(amount *big.Int, rate *big.Int) *big.Int {
 
 func calAmountIn(amount *big.Int, rate *big.Int) *big.Int {
 	tmp := new(big.Int).Mul(amount, precision)
-	tmp = new(big.Int).Add(tmp, big.NewInt(1))
-	tmp = new(big.Int).Sub(tmp, rate)
+	tmp = new(big.Int).Add(tmp, rate)
+	tmp = new(big.Int).Sub(tmp, big.NewInt(1))
 	return tmp.Div(tmp, rate)
 }
 
@@ -200,14 +200,14 @@ func (s *Settlement1) ToBytes() []byte {
 }
 
 type Settlement2 struct {
-	OpType      OpType
-	LeftoverID  uint64
-	AccountID   uint32
-	Amount1     Amount
-	Rate1       Amount
-	Fee1        Fee
-	ValidSince  uint32
-	ValidPeriod uint32
+	OpType       OpType
+	LooID1       uint64
+	AccountID2   uint32
+	Amount2      Amount
+	Rate2        Amount
+	Fee2         Fee
+	ValidSince2  uint32
+	ValidPeriod2 uint32
 }
 
 func (s *Settlement2) ToBytes() []byte {
@@ -215,33 +215,85 @@ func (s *Settlement2) ToBytes() []byte {
 	// the first 6 bytes, 4 bit opType, 44 bits LeftOverID
 	head := uint64(0)
 	head = head | (uint64(s.OpType) << 44)
-	head = head | (uint64(s.LeftoverID))
-	out = append(out, common.Uint64ToBytes(head)[1:]...)
-	out = append(out, common.Uint32ToBytes(s.AccountID)...)
-	out = append(out, s.Amount1.toBytes()...)
-	out = append(out, s.Rate1.toBytes()...)
-	out = append(out, s.Fee1.toBytes()...)
-	out = append(out, common.Uint32ToBytes(s.ValidSince)...)
-
-	data := common.Uint32ToBytes(s.ValidPeriod)
-	out = append(out, data[:3]...)
+	head = head | (s.LooID1)
+	out = append(out, common.Uint48ToBytes(head)...)
+	out = append(out, common.Uint32ToBytes(s.AccountID2)...)
+	out = append(out, s.Amount2.toBytes()...)
+	out = append(out, s.Rate2.toBytes()...)
+	out = append(out, s.Fee2.toBytes()...)
+	out = append(out, common.Uint32ToBytes(s.ValidSince2)...)
+	out = append(out, common.Uint32ToBytes(s.ValidPeriod2<<4)...)
 	return out
 }
 
+func (s *Settlement2) GetSettlementValue(loo1 *LeftOverOrder) (amount1 *big.Int, amount2 *big.Int, fee1 *big.Int, fee2 *big.Int, loo2 *LeftOverOrder) {
+	var (
+		orderAmount1 = new(big.Int).Set(loo1.Amount)
+		orderRate1   = new(big.Int).Set(loo1.Rate)
+		orderAmount2 = s.Amount2.Big()
+		orderRate2   = s.Rate2.Big()
+	)
+
+	if loo1.ValidSince <= s.ValidSince2 {
+		amount2 = calAmountOut(orderAmount1, orderRate1)
+		if amount2.Cmp(orderAmount2) == 1 {
+			amount2.Set(orderAmount2)
+			amount1 = calAmountIn(orderAmount2, orderRate1)
+		} else {
+			amount1 = new(big.Int).Set(orderAmount1)
+		}
+	} else {
+		amount1 = calAmountOut(orderAmount2, orderRate2)
+		if amount1.Cmp(orderAmount1) == 1 {
+			amount1.Set(orderAmount1)
+			amount2 = calAmountIn(orderAmount1, orderRate2)
+		} else {
+			amount2 = new(big.Int).Set(orderAmount2)
+		}
+	}
+
+	if amount1.Cmp(orderAmount1) < 0 {
+		fee1 = new(big.Int).Div(new(big.Int).Mul(loo1.Fee, amount1), orderAmount1)
+	} else {
+		fee1 = new(big.Int).Set(loo1.Fee)
+	}
+
+	if amount2.Cmp(orderAmount2) < 0 { //left-over loo1 at order 2
+		fee2 = new(big.Int).Div(new(big.Int).Mul(s.Fee2.Big(), amount2), orderAmount2)
+		loo2 = &LeftOverOrder{
+			AccountID:   s.AccountID2,
+			SrcToken:    loo1.DestToken,
+			DestToken:   loo1.SrcToken,
+			Amount:      new(big.Int).Sub(orderAmount2, amount2),
+			Rate:        orderRate2,
+			Fee:         new(big.Int).Sub(s.Fee2.Big(), fee2),
+			ValidSince:  s.ValidSince2,
+			ValidPeriod: s.ValidPeriod2,
+		}
+	} else {
+		fee2 = s.Fee2.Big()
+	}
+
+	loo1.Amount = orderAmount1.Sub(orderAmount1, amount1)
+	loo1.Fee = loo1.Fee.Sub(loo1.Fee, fee1)
+
+	return
+}
+
 type Settlement3 struct {
-	OpType      OpType
-	LeftoverID1 uint64
-	LeftoverID2 uint64
+	LooID1 uint64
+	LooID2 uint64
 }
 
 func (s *Settlement3) ToBytes() []byte {
 	var out []byte
 	// the first 6 bytes, 4 bit opType, 44 bits LeftOverID1
 	head := uint64(0)
-	head = head | (uint64(s.OpType) << 44)
-	head = head | (uint64(s.LeftoverID1))
-	out = append(out, common.Uint64ToBytes(head)[1:]...)
-	out = append(out, common.Uint64ToBytes(s.LeftoverID2)...)
+	head = head | (uint64(SettlementOp3) << 44)
+	head = head | (s.LooID1)
+	out = append(out, common.Uint48ToBytes(head)...)
+	// next 6 bytes: 44 looID2x
+	out = append(out, common.Uint48ToBytes(s.LooID2<<4)...)
 	return out
 }
 

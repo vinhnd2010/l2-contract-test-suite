@@ -20,9 +20,8 @@ func main() {
 	var testSuits []DeserializeTestSuit
 	for _, settlement := range []types.Settlement3{
 		{
-			OpType:      types.SettlementOp3,
-			LeftoverID1: 1,
-			LeftoverID2: 2,
+			LooID1: 197,
+			LooID2: 24329,
 		},
 	} {
 		testSuits = append(testSuits, DeserializeTestSuit{

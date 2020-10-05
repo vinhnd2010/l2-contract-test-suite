@@ -75,12 +75,12 @@ func (sData *StateData) Hash() common.Hash {
 	)
 }
 
-//TODO: add loo to genesis later
 type Genesis struct {
 	AccountAlloc map[uint32]GenesisAccount
 	AccountMax   uint32
 
-	LooMax uint64
+	LooAlloc map[uint64]*types.LeftOverOrder
+	LooMax   uint64
 }
 
 type GenesisAccount struct {
@@ -99,6 +99,7 @@ func NewBlockchain(genesis *Genesis) *Blockchain {
 		}
 	}
 
+	looState := NewLOOList()
 	state := NewState()
 	for accountID, accountAlloc := range genesis.AccountAlloc {
 		account := NewAccount(accountAlloc.Pubkey, accountAlloc.Address)
@@ -112,10 +113,16 @@ func NewBlockchain(genesis *Genesis) *Blockchain {
 		)
 		state.tree.Update(uint64(accountID), accountHash)
 	}
+
+	for looID, loo := range genesis.LooAlloc {
+		looState.loos[looID] = loo.Clone()
+		looState.tree.Update(looID, loo.Hash())
+	}
+
 	return &Blockchain{
 		state:      state,
 		accountMax: genesis.AccountMax,
-		looState:   NewLOOList(),
+		looState:   looState,
 		looMax:     genesis.LooMax,
 	}
 }
@@ -132,6 +139,14 @@ func (bc *Blockchain) AddMiniBlock(block *types.MiniBlock) []hexutil.Bytes {
 		switch obj := tx.(type) {
 		case *types.Settlement1:
 			proof, fee := bc.handleSettlement1(obj)
+			proofs = append(proofs, proof)
+			totalFee = totalFee.Add(totalFee, fee)
+		case *types.Settlement2:
+			proof, fee := bc.handleSettlement2(obj)
+			proofs = append(proofs, proof)
+			totalFee = totalFee.Add(totalFee, fee)
+		case *types.Settlement3:
+			proof, fee := bc.handleSettlement3(obj)
 			proofs = append(proofs, proof)
 			totalFee = totalFee.Add(totalFee, fee)
 		case *types.DepositOp:
@@ -201,24 +216,26 @@ func (bc *Blockchain) handleDepositToNew(op *types.DepositToNewOp) (proof hexuti
 	return proof
 }
 
-func (bc *Blockchain) handleSettlement1(op *types.Settlement1) (proof hexutil.Bytes, fee *big.Int) {
-	account := bc.state.accounts[op.Account1]
+func (bc *Blockchain) updateSettlementBalance(
+	accountID1, accountID2 uint32, tokenID1, tokenID2 uint16,
+	amount1, amount2, fee1, fee2 *big.Int,
+) (proof hexutil.Bytes) {
+	account := bc.state.accounts[accountID1]
 	if account == nil {
 		panic("empty account")
 	}
 
-	amount1, amount2, fee1, fee2, loo := op.GetSettlementValue()
-	_, accountSiblings := bc.state.tree.GetProof(uint64(op.Account1))
+	_, accountSiblings := bc.state.tree.GetProof(uint64(accountID1))
 	proof = appendSiblings(proof, accountSiblings)
 	pubAccountHash := account.GetPubAccountHash()
 	proof = append(proof, pubAccountHash.Bytes()...)
 	// update balance of token
-	token1Amount, token1Siblings := account.tree.GetProof(uint64(op.Token1))
-	account.tree.Update(uint64(op.Token1), util.SubAmount(token1Amount, amount1))
+	token1Amount, token1Siblings := account.tree.GetProof(uint64(tokenID1))
+	account.tree.Update(uint64(tokenID1), util.SubAmount(token1Amount, amount1))
 	proof = appendTokenProof(proof, token1Amount, token1Siblings)
 
-	token2Amount, token2Siblings := account.tree.GetProof(uint64(op.Token2))
-	account.tree.Update(uint64(op.Token2), util.AddAmount(token2Amount, amount2))
+	token2Amount, token2Siblings := account.tree.GetProof(uint64(tokenID2))
+	account.tree.Update(uint64(tokenID2), util.AddAmount(token2Amount, amount2))
 	proof = appendTokenProof(proof, token2Amount, token2Siblings)
 
 	token0Amount, token0Siblings := account.tree.GetProof(FeeTokenIndex)
@@ -227,23 +244,23 @@ func (bc *Blockchain) handleSettlement1(op *types.Settlement1) (proof hexutil.By
 
 	// update root to merkle tree
 	accountHash := crypto.Keccak256Hash(account.tree.rootHash().Bytes(), pubAccountHash.Bytes())
-	bc.state.tree.Update(uint64(op.Account1), accountHash)
+	bc.state.tree.Update(uint64(accountID1), accountHash)
 
-	account = bc.state.accounts[op.Account2]
+	account = bc.state.accounts[accountID2]
 	if account == nil {
 		panic("empty account")
 	}
-	_, accountSiblings = bc.state.tree.GetProof(uint64(op.Account2))
+	_, accountSiblings = bc.state.tree.GetProof(uint64(accountID2))
 	proof = appendSiblings(proof, accountSiblings)
 	pubAccountHash = account.GetPubAccountHash()
 	proof = append(proof, pubAccountHash.Bytes()...)
 	// update balance of token
-	token2Amount, token2Siblings = account.tree.GetProof(uint64(op.Token2))
-	account.tree.Update(uint64(op.Token2), util.SubAmount(token2Amount, amount2))
+	token2Amount, token2Siblings = account.tree.GetProof(uint64(tokenID2))
+	account.tree.Update(uint64(tokenID2), util.SubAmount(token2Amount, amount2))
 	proof = appendTokenProof(proof, token2Amount, token2Siblings)
 
-	token1Amount, token1Siblings = account.tree.GetProof(uint64(op.Token1))
-	account.tree.Update(uint64(op.Token1), util.AddAmount(token1Amount, amount1))
+	token1Amount, token1Siblings = account.tree.GetProof(uint64(tokenID1))
+	account.tree.Update(uint64(tokenID1), util.AddAmount(token1Amount, amount1))
 	proof = appendTokenProof(proof, token1Amount, token1Siblings)
 
 	token0Amount, token0Siblings = account.tree.GetProof(FeeTokenIndex)
@@ -251,7 +268,21 @@ func (bc *Blockchain) handleSettlement1(op *types.Settlement1) (proof hexutil.By
 	proof = appendTokenProof(proof, token0Amount, token0Siblings)
 	// update root to merkle tree
 	accountHash = crypto.Keccak256Hash(account.tree.rootHash().Bytes(), pubAccountHash.Bytes())
-	bc.state.tree.Update(uint64(op.Account2), accountHash)
+	bc.state.tree.Update(uint64(accountID2), accountHash)
+
+	return proof
+}
+
+func (bc *Blockchain) handleSettlement1(op *types.Settlement1) (proof hexutil.Bytes, fee *big.Int) {
+	account := bc.state.accounts[op.Account1]
+	if account == nil {
+		panic("empty account")
+	}
+
+	amount1, amount2, fee1, fee2, loo := op.GetSettlementValue()
+
+	proof = append(proof, bc.updateSettlementBalance(op.Account1, op.Account2, op.Token1, op.Token2,
+		amount1, amount2, fee1, fee2)...)
 
 	if loo != nil {
 		bc.looMax += 1
@@ -262,6 +293,107 @@ func (bc *Blockchain) handleSettlement1(op *types.Settlement1) (proof hexutil.By
 	}
 	fee = new(big.Int).Add(fee1, fee2)
 	return
+}
+
+func (bc *Blockchain) handleSettlement2(op *types.Settlement2) (proof hexutil.Bytes, fee *big.Int) {
+	loo, ok := bc.looState.loos[op.LooID1]
+	if !ok {
+		panic("loo not exist")
+	}
+	_, looSiblings := bc.looState.tree.GetProof(op.LooID1)
+	proof = append(proof, loo.Bytes()...)
+	proof = appendSiblings(proof, looSiblings)
+
+	amount1, amount2, fee1, fee2, loo2 := op.GetSettlementValue(loo)
+
+	proof = append(proof,
+		bc.updateSettlementBalance(
+			loo.AccountID, op.AccountID2, loo.SrcToken, loo.DestToken,
+			amount1, amount2, fee1, fee2,
+		)...)
+
+	bc.looState.tree.Update(op.LooID1, loo.Hash())
+	if loo2 != nil {
+		bc.looMax += 1
+		_, looSiblings := bc.looState.tree.GetProof(bc.looMax)
+		proof = appendSiblings(proof, looSiblings)
+		bc.looState.tree.Update(bc.looMax, loo2.Hash())
+		bc.looState.loos[bc.looMax] = loo2
+	}
+
+	totalFee := new(big.Int).Add(fee1, fee2)
+	return proof, totalFee
+}
+
+func (bc *Blockchain) handleSettlement3(op *types.Settlement3) (proof hexutil.Bytes, fee *big.Int) {
+	loo1, ok := bc.looState.loos[op.LooID1]
+	if !ok {
+		panic("loo not exist")
+	}
+	proof = append(proof, loo1.Bytes()...)
+
+	loo2, ok := bc.looState.loos[op.LooID2]
+	if !ok {
+		panic("loo not exist")
+	}
+	proof = append(proof, loo2.Bytes()...)
+
+	var (
+		orderAmount1                 = new(big.Int).Set(loo1.Amount)
+		orderRate1                   = new(big.Int).Set(loo1.Rate)
+		orderAmount2                 = new(big.Int).Set(loo2.Amount)
+		orderRate2                   = new(big.Int).Set(loo2.Rate)
+		amount1, amount2, fee1, fee2 *big.Int
+	)
+
+	if loo1.ValidSince <= loo2.ValidSince {
+		amount2 = util.CalAmountOut(orderAmount1, orderRate1)
+		if amount2.Cmp(orderAmount2) == 1 {
+			amount2.Set(orderAmount2)
+			amount1 = util.CalAmountIn(orderAmount2, orderRate1)
+		} else {
+			amount1 = new(big.Int).Set(orderAmount1)
+		}
+	} else {
+		amount1 = util.CalAmountOut(orderAmount2, orderRate2)
+		if amount1.Cmp(orderAmount1) == 1 {
+			amount1.Set(orderAmount1)
+			amount2 = util.CalAmountIn(orderAmount1, orderRate2)
+		} else {
+			amount2 = new(big.Int).Set(orderAmount2)
+		}
+	}
+	if amount1.Cmp(orderAmount1) < 0 { //left-over loo1 at order 1
+		fee1 = new(big.Int).Div(new(big.Int).Mul(loo1.Fee, amount1), orderAmount1)
+	} else {
+		fee1 = new(big.Int).Set(loo1.Fee)
+	}
+
+	_, looSiblings := bc.looState.tree.GetProof(op.LooID1)
+	proof = appendSiblings(proof, looSiblings)
+	loo1.Amount = orderAmount1.Sub(orderAmount1, amount1)
+	loo1.Fee = loo1.Fee.Sub(loo1.Fee, fee1)
+	bc.looState.tree.Update(op.LooID1, loo1.Hash())
+
+	if amount2.Cmp(orderAmount2) < 0 { //left-over loo1 at order 2
+		fee2 = new(big.Int).Div(new(big.Int).Mul(loo2.Fee, amount2), orderAmount2)
+	} else {
+		fee2 = new(big.Int).Set(loo2.Fee)
+	}
+	_, looSiblings = bc.looState.tree.GetProof(op.LooID2)
+	proof = appendSiblings(proof, looSiblings)
+	loo2.Amount = orderAmount2.Sub(orderAmount2, amount2)
+	loo2.Fee = loo2.Fee.Sub(loo2.Fee, fee2)
+	bc.looState.tree.Update(op.LooID2, loo2.Hash())
+
+	proof = append(proof,
+		bc.updateSettlementBalance(
+			loo1.AccountID, loo2.AccountID, loo1.SrcToken, loo2.SrcToken,
+			amount1, amount2, fee1, fee2,
+		)...)
+
+	totalFee := new(big.Int).Add(fee1, fee2)
+	return proof, totalFee
 }
 
 func (bc *Blockchain) handleTotalFee(fee *big.Int) (proof hexutil.Bytes) {
