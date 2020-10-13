@@ -17,42 +17,6 @@ const LOOTreeDeep = 45
 const FeeTokenIndex = 0
 const AdminIndex uint32 = 0
 
-type State struct {
-	accounts map[uint32]*Account
-	tree     *MerkleTree
-}
-
-func NewState() *State {
-	return &State{
-		accounts: make(map[uint32]*Account),
-		tree:     NewTree(StateTreeDeep),
-	}
-}
-
-type Account struct {
-	pubKey     hexutil.Bytes
-	withdrawTo common.Address
-	tree       *MerkleTree
-}
-
-func NewAccount(pubKey hexutil.Bytes, withdrawTo common.Address) *Account {
-	return &Account{
-		pubKey:     pubKey,
-		withdrawTo: withdrawTo,
-		tree:       NewTree(AccountTreeDeep),
-	}
-}
-
-// update tree, returns a new Hash
-func (a *Account) Update(tokenID uint16, amount *big.Int) common.Hash {
-	a.tree.Update(uint64(tokenID), common.BigToHash(amount))
-	return a.tree.rootHash()
-}
-
-func (a *Account) GetPubAccountHash() common.Hash {
-	return crypto.Keccak256Hash(a.pubKey, a.withdrawTo.Bytes())
-}
-
 type Blockchain struct {
 	state      *State
 	accountMax uint32
@@ -61,19 +25,6 @@ type Blockchain struct {
 	numDeposit uint64
 }
 
-type StateData struct {
-	StateRoot  common.Hash
-	LOORoot    common.Hash
-	AccountMax uint32
-	LOOMax     uint64
-}
-
-func (sData *StateData) Hash() common.Hash {
-	return crypto.Keccak256Hash(
-		sData.StateRoot.Bytes(), sData.LOORoot.Bytes(),
-		util.Uint32ToBytes(sData.AccountMax), util.Uint48ToBytes(sData.LOOMax),
-	)
-}
 
 type Genesis struct {
 	AccountAlloc map[uint32]GenesisAccount
@@ -108,7 +59,7 @@ func NewBlockchain(genesis *Genesis) *Blockchain {
 		}
 		state.accounts[accountID] = account
 		accountHash := crypto.Keccak256Hash(
-			account.tree.rootHash().Bytes(),
+			account.tree.RootHash().Bytes(),
 			account.GetPubAccountHash().Bytes(),
 		)
 		state.tree.Update(uint64(accountID), accountHash)
@@ -181,7 +132,7 @@ func (bc *Blockchain) handleDeposit(op *types.DepositOp) (proof hexutil.Bytes) {
 	proof = appendTokenProof(proof, tokenAmount, tokenSiblings)
 	account.tree.Update(uint64(op.TokenID), util.AddAmount(tokenAmount, op.Amount))
 	// update bc tree
-	accountHash := crypto.Keccak256Hash(account.tree.rootHash().Bytes(), pubAccountHash.Bytes())
+	accountHash := crypto.Keccak256Hash(account.tree.RootHash().Bytes(), pubAccountHash.Bytes())
 	bc.state.tree.Update(uint64(op.AccountID), accountHash)
 
 	proof = append(proof, util.Uint32ToBytes(op.AccountID)...)
@@ -206,7 +157,7 @@ func (bc *Blockchain) handleDepositToNew(op *types.DepositToNewOp) (proof hexuti
 	account.tree.Update(uint64(op.TokenID), common.BigToHash(op.Amount))
 	account.GetPubAccountHash()
 
-	accountHash := crypto.Keccak256Hash(account.tree.rootHash().Bytes(), account.GetPubAccountHash().Bytes())
+	accountHash := crypto.Keccak256Hash(account.tree.RootHash().Bytes(), account.GetPubAccountHash().Bytes())
 	bc.state.tree.Update(uint64(accountID), accountHash)
 	proof = append(proof, op.PubKey...)
 	proof = append(proof, op.WithdrawTo.Bytes()...)
@@ -243,7 +194,7 @@ func (bc *Blockchain) updateSettlementBalance(
 	proof = appendTokenProof(proof, token0Amount, token0Siblings)
 
 	// update root to merkle tree
-	accountHash := crypto.Keccak256Hash(account.tree.rootHash().Bytes(), pubAccountHash.Bytes())
+	accountHash := crypto.Keccak256Hash(account.tree.RootHash().Bytes(), pubAccountHash.Bytes())
 	bc.state.tree.Update(uint64(accountID1), accountHash)
 
 	account = bc.state.accounts[accountID2]
@@ -267,7 +218,7 @@ func (bc *Blockchain) updateSettlementBalance(
 	account.tree.Update(FeeTokenIndex, util.SubAmount(token0Amount, fee2))
 	proof = appendTokenProof(proof, token0Amount, token0Siblings)
 	// update root to merkle tree
-	accountHash = crypto.Keccak256Hash(account.tree.rootHash().Bytes(), pubAccountHash.Bytes())
+	accountHash = crypto.Keccak256Hash(account.tree.RootHash().Bytes(), pubAccountHash.Bytes())
 	bc.state.tree.Update(uint64(accountID2), accountHash)
 
 	return proof
@@ -412,7 +363,7 @@ func (bc *Blockchain) handleTotalFee(fee *big.Int) (proof hexutil.Bytes) {
 	proof = appendTokenProof(proof, feeAmount, feeSiblings)
 
 	account.tree.Update(uint64(FeeTokenIndex), util.AddAmount(feeAmount, fee))
-	accountHash := crypto.Keccak256Hash(account.tree.rootHash().Bytes(), pubAccountHash.Bytes())
+	accountHash := crypto.Keccak256Hash(account.tree.RootHash().Bytes(), pubAccountHash.Bytes())
 
 	bc.state.tree.Update(uint64(AdminIndex), accountHash)
 	return proof
@@ -435,8 +386,8 @@ func appendSiblings(proof hexutil.Bytes, siblings []common.Hash) hexutil.Bytes {
 
 func (bc *Blockchain) GetStateData() *StateData {
 	return &StateData{
-		StateRoot:  bc.state.tree.rootHash(),
-		LOORoot:    bc.looState.tree.rootHash(),
+		StateRoot:  bc.state.tree.RootHash(),
+		LOORoot:    bc.looState.tree.RootHash(),
 		AccountMax: bc.accountMax,
 		LOOMax:     bc.looMax,
 	}

@@ -27,7 +27,7 @@ func (tr *MerkleTree) Update(k uint64, v common.Hash) {
 	tr.root.update(k, v)
 }
 
-func (tr *MerkleTree) rootHash() common.Hash {
+func (tr *MerkleTree) RootHash() common.Hash {
 	return tr.root.value
 }
 
