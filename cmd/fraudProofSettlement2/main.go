@@ -78,7 +78,7 @@ var genesis = &blockchain.Genesis{
 			DestToken:   2,
 			Amount:      big.NewInt(34500),
 			Fee:         big.NewInt(67432),
-			Rate:        types.Amount{Mantisa: 2, Exp: 17}.Big(),
+			Rate:        types.PackedAmount{Mantisa: 2, Exp: 17}.Big(),
 			ValidSince:  1601436627,
 			ValidPeriod: 823000,
 		},
@@ -96,15 +96,15 @@ func buildTest1() *FraudProofTestSuit {
 				OpType:     types.SettlementOp21,
 				LooID1:     243,
 				AccountID2: 123,
-				Rate2: types.Amount{
+				Rate2: types.PackedAmount{
 					Mantisa: 1,
 					Exp:     18,
 				},
-				Amount2: types.Amount{
+				Amount2: types.PackedAmount{
 					Mantisa: 3,
 					Exp:     6,
 				},
-				Fee2: types.Fee{
+				Fee2: types.PackedFee{
 					Mantisa: 4,
 					Exp:     2,
 				},
@@ -146,15 +146,15 @@ func buildTest2() *FraudProofTestSuit {
 				OpType:     types.SettlementOp21,
 				LooID1:     243,
 				AccountID2: 123,
-				Rate2: types.Amount{
+				Rate2: types.PackedAmount{
 					Mantisa: 1,
 					Exp:     18,
 				},
-				Amount2: types.Amount{
+				Amount2: types.PackedAmount{
 					Mantisa: 3,
 					Exp:     3,
 				},
-				Fee2: types.Fee{
+				Fee2: types.PackedFee{
 					Mantisa: 4,
 					Exp:     2,
 				},

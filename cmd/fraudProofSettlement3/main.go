@@ -81,7 +81,7 @@ var genesis = &blockchain.Genesis{
 			DestToken:   1,
 			Amount:      big.NewInt(4321),
 			Fee:         big.NewInt(600),
-			Rate:        types.Amount{Mantisa: 4, Exp: 18}.Big(),
+			Rate:        types.PackedAmount{Mantisa: 4, Exp: 18}.Big(),
 			ValidSince:  1601436626,
 			ValidPeriod: 823000,
 		},
@@ -91,7 +91,7 @@ var genesis = &blockchain.Genesis{
 			DestToken:   2,
 			Amount:      big.NewInt(34500),
 			Fee:         big.NewInt(67432),
-			Rate:        types.Amount{Mantisa: 2, Exp: 17}.Big(),
+			Rate:        types.PackedAmount{Mantisa: 2, Exp: 17}.Big(),
 			ValidSince:  1601436627,
 			ValidPeriod: 823000,
 		},
@@ -144,16 +144,16 @@ func buildBenchmarkTest() *FraudProofTestSuit {
 
 			1: blockchain.GenesisAccount{
 				Tokens: map[uint16]*big.Int{
-					0: types.Amount{Mantisa: 2, Exp: 18}.Big(),
-					1: types.Amount{Mantisa: 2, Exp: 18}.Big(),
+					0: types.PackedAmount{Mantisa: 2, Exp: 18}.Big(),
+					1: types.PackedAmount{Mantisa: 2, Exp: 18}.Big(),
 				},
 				Pubkey:  testsample.PublicKeys[3],
 				Address: common.HexToAddress("0x85E456C9AA9e8d6f1DF6E1aae6496b25b157634F"),
 			},
 			2: blockchain.GenesisAccount{
 				Tokens: map[uint16]*big.Int{
-					0: types.Amount{Mantisa: 2, Exp: 18}.Big(),
-					2: types.Amount{Mantisa: 2, Exp: 18}.Big(),
+					0: types.PackedAmount{Mantisa: 2, Exp: 18}.Big(),
+					2: types.PackedAmount{Mantisa: 2, Exp: 18}.Big(),
 				},
 				Pubkey:  testsample.PublicKeys[3],
 				Address: common.HexToAddress("0x85E456C9AA9e8d6f1DF6E1aae6496b25b157634F"),

@@ -59,27 +59,27 @@ func TestNewBlockchain(t *testing.T) {
 				Token2:   2,
 				Account1: 8,
 				Account2: 12,
-				Rate1: types.Amount{
+				Rate1: types.PackedAmount{
 					Mantisa: 1,
 					Exp:     18,
 				},
-				Rate2: types.Amount{
+				Rate2: types.PackedAmount{
 					Mantisa: 1,
 					Exp:     18,
 				},
-				Amount1: types.Amount{
+				Amount1: types.PackedAmount{
 					Mantisa: 2,
 					Exp:     6,
 				},
-				Amount2: types.Amount{
+				Amount2: types.PackedAmount{
 					Mantisa: 3,
 					Exp:     6,
 				},
-				Fee1: types.Fee{
+				Fee1: types.PackedFee{
 					Mantisa: 7,
 					Exp:     3,
 				},
-				Fee2: types.Fee{
+				Fee2: types.PackedFee{
 					Mantisa: 4,
 					Exp:     2,
 				},

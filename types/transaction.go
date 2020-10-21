@@ -35,51 +35,51 @@ var (
 )
 
 /// 10 bit for mantisa, 6 bit for
-type Fee struct {
+type PackedFee struct {
 	Mantisa uint16
 	Exp     uint8
 }
 
 // 10 bit for mantisa, 6 bit for exp
-func (f *Fee) toBytes() []byte {
+func (f *PackedFee) toBytes() []byte {
 	out := uint16(0)
 	out = out | (f.Mantisa << 6)
 	out = out | (uint16(f.Exp))
 	return common.Uint16ToByte(out)
 }
 
-func (f *Fee) Big() *big.Int {
+func (f *PackedFee) Big() *big.Int {
 	tmp := big.NewInt(int64(f.Exp))
 	tmp = new(big.Int).Exp(big.NewInt(10), tmp, nil)
 	tmp = new(big.Int).Mul(tmp, big.NewInt(int64(f.Mantisa)))
 	return tmp
 }
 
-func (f *Fee) MarshalText() ([]byte, error) {
+func (f *PackedFee) MarshalText() ([]byte, error) {
 	return []byte("0x" + f.Big().Text(16)), nil
 }
 
 /// @dev 32 bits for mantisa, 8 bits for exp
-type Amount struct {
+type PackedAmount struct {
 	Mantisa uint32
 	Exp     uint8
 }
 
-func (a *Amount) toBytes() []byte {
+func (a *PackedAmount) toBytes() []byte {
 	var out []byte
 	out = append(out, common.Uint32ToBytes(a.Mantisa)...)
 	out = append(out, common.Uint8ToByte(a.Exp))
 	return out
 }
 
-func (a Amount) Big() *big.Int {
+func (a PackedAmount) Big() *big.Int {
 	tmp := big.NewInt(int64(a.Exp))
 	tmp = new(big.Int).Exp(big.NewInt(10), tmp, nil)
 	tmp = new(big.Int).Mul(tmp, big.NewInt(int64(a.Mantisa)))
 	return tmp
 }
 
-func (a *Amount) MarshalText() ([]byte, error) {
+func (a *PackedAmount) MarshalText() ([]byte, error) {
 	return []byte("0x" + a.Big().Text(16)), nil
 }
 
@@ -89,12 +89,12 @@ type Settlement1 struct {
 	Token2       uint16
 	Account1     uint32
 	Account2     uint32
-	Rate1        Amount
-	Rate2        Amount
-	Amount1      Amount
-	Amount2      Amount
-	Fee1         Fee
-	Fee2         Fee
+	Rate1        PackedAmount
+	Rate2        PackedAmount
+	Amount1      PackedAmount
+	Amount2      PackedAmount
+	Fee1         PackedFee
+	Fee2         PackedFee
 	ValidSince1  uint32
 	ValidSince2  uint32
 	ValidPeriod1 uint32
@@ -203,9 +203,9 @@ type Settlement2 struct {
 	OpType       OpType
 	LooID1       uint64
 	AccountID2   uint32
-	Amount2      Amount
-	Rate2        Amount
-	Fee2         Fee
+	Amount2      PackedAmount
+	Rate2        PackedAmount
+	Fee2         PackedFee
 	ValidSince2  uint32
 	ValidPeriod2 uint32
 }
@@ -324,4 +324,44 @@ func (d *DepositToNewOp) ToBytes() []byte {
 	head = head | (uint64(DepositToNew) << 44)
 	head = head | (d.DepositID)
 	return common.Uint48ToBytes(head)
+}
+
+type WithdrawOp struct {
+	TokenID    uint16
+	Amount     PackedAmount
+	DestAddr   ethCommon.Address
+	AccountID  uint32
+	ValidSince uint32
+	Fee        PackedFee
+	WithdrawID uint
+}
+
+func (w *WithdrawOp) ToBytes() []byte {
+	var (
+		data = uint16(0)
+		out  []byte
+	)
+	data |= uint16(Withdraw) << 12
+	data |= w.TokenID << 2
+	out = append(out, common.Uint16ToByte(data)...)
+	out = append(out, w.Amount.toBytes()...)
+	out = append(out, w.DestAddr.Bytes()...)
+	out = append(out, common.Uint32ToBytes(w.AccountID)...)
+	out = append(out, common.Uint32ToBytes(w.ValidSince)...)
+	out = append(out, w.Fee.toBytes()...)
+	return out
+}
+
+type ExitOp struct {
+	AccountID   uint32
+	AccountRoot ethCommon.Hash
+}
+
+func (exit *ExitOp) ToBytes() []byte {
+	var out []byte
+	var data = uint8(Exit) << 4
+	out = append(out, data)
+	out = append(out, common.Uint32ToBytes(exit.AccountID)...)
+	out = append(out, exit.AccountRoot.Bytes()...)
+	return out
 }

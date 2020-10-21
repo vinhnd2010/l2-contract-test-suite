@@ -8,16 +8,18 @@ import (
 )
 
 type Account struct {
-	pubKey     hexutil.Bytes
-	withdrawTo common.Address
-	tree       *MerkleTree
+	pubKey          hexutil.Bytes
+	withdrawTo      common.Address
+	tree            *MerkleTree
+	isConfirmedExit bool
 }
 
 func NewAccount(pubKey hexutil.Bytes, withdrawTo common.Address) *Account {
 	return &Account{
-		pubKey:     pubKey,
-		withdrawTo: withdrawTo,
-		tree:       NewTree(AccountTreeDeep),
+		pubKey:          pubKey,
+		withdrawTo:      withdrawTo,
+		tree:            NewTree(AccountTreeDeep),
+		isConfirmedExit: false,
 	}
 }
 
@@ -30,5 +32,3 @@ func (a *Account) Update(tokenID uint16, amount *big.Int) common.Hash {
 func (a *Account) GetPubAccountHash() common.Hash {
 	return crypto.Keccak256Hash(a.pubKey, a.withdrawTo.Bytes())
 }
-
-

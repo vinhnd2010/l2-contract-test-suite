@@ -23,15 +23,15 @@ func main() {
 			OpType:     types.SettlementOp21,
 			LooID1:     342462,
 			AccountID2: 14,
-			Amount2: types.Amount{
+			Amount2: types.PackedAmount{
 				Mantisa: 2,
 				Exp:     14,
 			},
-			Rate2: types.Amount{
+			Rate2: types.PackedAmount{
 				Mantisa: 1,
 				Exp:     18,
 			},
-			Fee2: types.Fee{
+			Fee2: types.PackedFee{
 				Mantisa: 2,
 				Exp:     7,
 			},

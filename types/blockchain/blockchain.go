@@ -18,11 +18,12 @@ const FeeTokenIndex = 0
 const AdminIndex uint32 = 0
 
 type Blockchain struct {
-	state      *State
-	accountMax uint32
-	looState   *LeftOverOrderList
-	looMax     uint64
-	numDeposit uint64
+	state       *State
+	accountMax  uint32
+	looState    *LeftOverOrderList
+	looMax      uint64
+	numDeposit  uint64
+	numWithdraw uint
 }
 
 
@@ -105,6 +106,13 @@ func (bc *Blockchain) AddMiniBlock(block *types.MiniBlock) []hexutil.Bytes {
 			proofs = append(proofs, proof)
 		case *types.DepositToNewOp:
 			proof := bc.handleDepositToNew(obj)
+			proofs = append(proofs, proof)
+		case *types.WithdrawOp:
+			proof, fee := bc.handleWithdraw(obj)
+			proofs = append(proofs, proof)
+			totalFee = totalFee.Add(totalFee, fee)
+		case *types.ExitOp:
+			proof := bc.handleExit(obj)
 			proofs = append(proofs, proof)
 		default:
 			panic("unsupported type")
@@ -345,6 +353,89 @@ func (bc *Blockchain) handleSettlement3(op *types.Settlement3) (proof hexutil.By
 
 	totalFee := new(big.Int).Add(fee1, fee2)
 	return proof, totalFee
+}
+
+func (bc *Blockchain) handleWithdraw(op *types.WithdrawOp) (proof hexutil.Bytes, fee *big.Int) {
+	fee = op.Fee.Big()
+	amount := op.Amount.Big()
+	account := bc.state.accounts[op.AccountID]
+	if account == nil {
+		panic("empty account")
+	}
+
+	_, accountSiblings := bc.state.tree.GetProof(uint64(op.AccountID))
+	proof = appendSiblings(proof, accountSiblings)
+	pubAccountHash := account.GetPubAccountHash()
+	proof = append(proof, pubAccountHash.Bytes()...)
+	// update account tree
+	tokenAmount, tokenSiblings := account.tree.GetProof(uint64(op.TokenID))
+	proof = appendTokenProof(proof, tokenAmount, tokenSiblings)
+	account.tree.Update(uint64(op.TokenID), util.SubAmount(tokenAmount, amount))
+	// update token fee
+	tokenAmount, tokenSiblings = account.tree.GetProof(uint64(FeeTokenIndex))
+	proof = appendTokenProof(proof, tokenAmount, tokenSiblings)
+	account.tree.Update(uint64(FeeTokenIndex), util.SubAmount(tokenAmount, fee))
+	// update bc tree
+	accountHash := crypto.Keccak256Hash(account.tree.RootHash().Bytes(), pubAccountHash.Bytes())
+	bc.state.tree.Update(uint64(op.AccountID), accountHash)
+
+	op.WithdrawID = bc.numWithdraw
+	bc.numWithdraw++
+	return proof, fee
+}
+
+func (bc *Blockchain) handleExit(op *types.ExitOp) (proof hexutil.Bytes) {
+	account := bc.state.accounts[op.AccountID]
+	if account == nil {
+		panic("empty account")
+	}
+
+	balanceRoot := account.tree.RootHash()
+	proof = append(proof, balanceRoot.Bytes()...)
+
+	pubAccountHash := account.GetPubAccountHash()
+	proof = append(proof, pubAccountHash.Bytes()...)
+
+	_, accountSiblings := bc.state.tree.GetProof(uint64(op.AccountID))
+	proof = appendSiblings(proof, accountSiblings)
+	// set balance root of this account to bytes32(0)
+	accountHash := crypto.Keccak256Hash(common.HexToHash(zeroHash).Bytes(), pubAccountHash.Bytes())
+	bc.state.tree.Update(uint64(op.AccountID), accountHash)
+	account.isConfirmedExit = true
+	// set balanceRoot to operation
+	op.AccountRoot = balanceRoot
+	return proof
+}
+
+// BuildSubmitExitProof builds a proof for user to submit exit
+func (bc *Blockchain) BuildSubmitExitProof(accountID uint32) (balanceRoot common.Hash, proof hexutil.Bytes) {
+	account := bc.state.accounts[accountID]
+	if account == nil {
+		panic("empty account")
+	}
+
+	proof = append(proof, account.pubKey...)
+	balanceRoot = account.tree.RootHash()
+
+	_, accountSibling := bc.state.tree.GetProof(uint64(accountID))
+	proof = appendSiblings(proof, accountSibling)
+	proof = append(proof, bc.looState.tree.RootHash().Bytes()...)
+	proof = append(proof, util.Uint32ToBytes(bc.accountMax)...)
+	proof = append(proof, util.Uint48ToBytes(bc.looMax)...)
+	return balanceRoot, proof
+}
+
+// BuildCompleteExit builds a proof for user to get tokens and complete exit
+func (bc *Blockchain) BuildCompleteExit(accountID uint32, tokenIDs []uint16) (amounts []*big.Int, siblings []common.Hash) {
+	var keys []uint64
+	for i := 0; i < len(tokenIDs); i++ {
+		keys = append(keys, uint64(tokenIDs[i]))
+	}
+	values, siblings := bc.state.accounts[accountID].tree.GetProofBatch(keys)
+	for i := 0; i < len(values); i++ {
+		amounts = append(amounts, values[i].Big())
+	}
+	return amounts, siblings
 }
 
 func (bc *Blockchain) handleTotalFee(fee *big.Int) (proof hexutil.Bytes) {

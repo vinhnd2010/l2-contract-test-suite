@@ -9,7 +9,7 @@ import (
 )
 
 func TestFee_MarshalText(t *testing.T) {
-	fee := &Fee{
+	fee := &PackedFee{
 		Mantisa: 34,
 		Exp:     1,
 	}
@@ -19,7 +19,7 @@ func TestFee_MarshalText(t *testing.T) {
 }
 
 func TestFee_ToBytes(t *testing.T) {
-	fee := &Fee{
+	fee := &PackedFee{
 		Mantisa: 34,
 		Exp:     1,
 	}
@@ -33,27 +33,27 @@ func TestSettlementOp1(t *testing.T) {
 		Token2:   2,
 		Account1: 14,
 		Account2: 15,
-		Rate1: Amount{
+		Rate1: PackedAmount{
 			Mantisa: 1,
 			Exp:     18,
 		},
-		Rate2: Amount{
+		Rate2: PackedAmount{
 			Mantisa: 1,
 			Exp:     18,
 		},
-		Amount1: Amount{
+		Amount1: PackedAmount{
 			Mantisa: 2,
 			Exp:     14,
 		},
-		Amount2: Amount{
+		Amount2: PackedAmount{
 			Mantisa: 3,
 			Exp:     14,
 		},
-		Fee1: Fee{
+		Fee1: PackedFee{
 			Mantisa: 1,
 			Exp:     6,
 		},
-		Fee2: Fee{
+		Fee2: PackedFee{
 			Mantisa: 1,
 			Exp:     6,
 		},

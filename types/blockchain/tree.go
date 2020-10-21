@@ -15,12 +15,56 @@ type MerkleTree struct {
 func NewTree(deep uint) *MerkleTree {
 	return &MerkleTree{
 		deep: deep,
-		root: newNode(common.HexToHash(zeroHash), deep-1),
+		root: newNode(common.HexToHash(zeroHash), deep-1, nil),
 	}
 }
 
 func (tr *MerkleTree) GetProof(k uint64) (common.Hash, []common.Hash) {
 	return tr.root.getProof(k)
+}
+
+func (tr *MerkleTree) GetProofBatch(k []uint64) (values []common.Hash, siblings []common.Hash) {
+	var nodes []*node
+	var tmpKey []uint64
+	tmpKey = append(tmpKey, k...)
+	for i := 0; i < len(k); i++ {
+		node := tr.getNode(k[i])
+		if node == nil {
+			panic("invalid node batch proof")
+		} else {
+			values = append(values, node.value)
+		}
+		nodes = append(nodes, node)
+	}
+
+	for deep := uint(0); deep < tr.deep-1; deep++ {
+		var tmpKeys2 []uint64
+		var tmpNodes []*node
+		for i := 0; i < len(tmpKey); {
+			if (i != len(tmpKey)-1) && (tmpKey[i]/2 == tmpKey[i+1]/2) {
+				tmpKeys2 = append(tmpKeys2, tmpKey[i]/2)
+				tmpNodes = append(tmpNodes, nodes[i].parent)
+				i += 2
+				continue
+			}
+
+			if tmpKey[i]%2 == 0 {
+				siblings = append(siblings, nodes[i].parent.rightHash())
+			} else {
+				siblings = append(siblings, nodes[i].parent.leftHash())
+			}
+			tmpKeys2 = append(tmpKeys2, tmpKey[i]/2)
+			tmpNodes = append(tmpNodes, nodes[i].parent)
+			i++
+		}
+		tmpKey = tmpKeys2
+		nodes = tmpNodes
+	}
+	return values, siblings
+}
+
+func (tr *MerkleTree) getNode(k uint64) *node {
+	return tr.root.getNode(k)
 }
 
 func (tr *MerkleTree) Update(k uint64, v common.Hash) {
@@ -32,16 +76,18 @@ func (tr *MerkleTree) RootHash() common.Hash {
 }
 
 type node struct {
-	deep  uint
-	value common.Hash
-	left  *node
-	right *node
+	deep   uint
+	value  common.Hash
+	left   *node
+	right  *node
+	parent *node
 }
 
-func newNode(value common.Hash, deep uint) *node {
+func newNode(value common.Hash, deep uint, parent *node) *node {
 	return &node{
-		deep:  deep,
-		value: value,
+		deep:   deep,
+		value:  value,
+		parent: parent,
 	}
 }
 
@@ -89,6 +135,26 @@ func (n *node) getProof(key uint64) (value common.Hash, siblings []common.Hash) 
 	return
 }
 
+func (n *node) getNode(key uint64) *node {
+	if n.deep == 0 {
+		return n
+	}
+	isLeft := ((key >> (n.deep - 1)) & 1) == 0
+	if isLeft {
+		if n.left == nil { // key in null branch
+			return nil
+		} else {
+			return n.left.getNode(key)
+		}
+	} else {
+		if n.right == nil {
+			return nil
+		} else {
+			return n.right.getNode(key)
+		}
+	}
+}
+
 func (n *node) update(key uint64, value common.Hash) {
 	if n.deep == 0 {
 		n.value = value
@@ -98,12 +164,12 @@ func (n *node) update(key uint64, value common.Hash) {
 	isLeft := ((key >> (n.deep - 1)) & 1) == 0
 	if isLeft {
 		if n.left == nil {
-			n.left = newNode(common.HexToHash(zeroHash), n.deep-1)
+			n.left = newNode(common.HexToHash(zeroHash), n.deep-1, n)
 		}
 		n.left.update(key, value)
 	} else {
 		if n.right == nil {
-			n.right = newNode(common.HexToHash(zeroHash), n.deep-1)
+			n.right = newNode(common.HexToHash(zeroHash), n.deep-1, n)
 		}
 		n.right.update(key, value)
 	}
