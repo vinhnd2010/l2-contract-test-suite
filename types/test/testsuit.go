@@ -24,6 +24,7 @@ const (
 	CompleteWithdraw
 	SubmitExit
 	CompleteExit
+	SubmitDepositToNew
 )
 
 type Step struct {

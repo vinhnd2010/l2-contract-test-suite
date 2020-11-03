@@ -1,6 +1,7 @@
 package blockchain
 
 import (
+	"fmt"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -25,7 +26,6 @@ type Blockchain struct {
 	numDeposit  uint64
 	numWithdraw uint
 }
-
 
 type Genesis struct {
 	AccountAlloc map[uint32]GenesisAccount
@@ -164,14 +164,19 @@ func (bc *Blockchain) handleDepositToNew(op *types.DepositToNewOp) (proof hexuti
 	account = NewAccount(op.PubKey, op.WithdrawTo)
 	account.tree.Update(uint64(op.TokenID), common.BigToHash(op.Amount))
 	account.GetPubAccountHash()
+	bc.state.accounts[accountID] = account
 
 	accountHash := crypto.Keccak256Hash(account.tree.RootHash().Bytes(), account.GetPubAccountHash().Bytes())
 	bc.state.tree.Update(uint64(accountID), accountHash)
+
 	proof = append(proof, op.PubKey...)
 	proof = append(proof, op.WithdrawTo.Bytes()...)
 	proof = append(proof, util.Uint16ToByte(op.TokenID)...)
 	proof = append(proof, common.BigToHash(op.Amount).Bytes()...)
 	proof = appendSiblings(proof, siblings)
+
+	op.DepositID = bc.numDeposit
+	bc.numDeposit++
 	return proof
 }
 
@@ -404,6 +409,8 @@ func (bc *Blockchain) handleExit(op *types.ExitOp) (proof hexutil.Bytes) {
 	account.isConfirmedExit = true
 	// set balanceRoot to operation
 	op.AccountRoot = balanceRoot
+
+	fmt.Println(len(proof))
 	return proof
 }
 
