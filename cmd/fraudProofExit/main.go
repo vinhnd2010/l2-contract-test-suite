@@ -135,6 +135,7 @@ func buildTest1() *test.Suit {
 	return &test.Suit{
 		Msg:              "test case when exit with 2 tokens",
 		GenesisStateHash: genesisHash,
+		AccountMax:       genesis.AccountMax,
 		Steps: []test.Step{
 			{Action: test.SubmitDeposit, Data: deposit},
 			{Action: test.SubmitDeposit, Data: deposit2},

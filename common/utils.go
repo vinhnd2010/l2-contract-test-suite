@@ -33,6 +33,9 @@ func AddAmount(beforeValue common.Hash, value *big.Int) common.Hash {
 }
 
 func SubAmount(beforeValue common.Hash, value *big.Int) common.Hash {
+	if beforeValue.Big().Cmp(value) < 0 {
+		panic("insufficient funds")
+	}
 	return common.BigToHash(new(big.Int).Sub(beforeValue.Big(), value))
 }
 

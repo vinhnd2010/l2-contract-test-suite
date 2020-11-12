@@ -26,7 +26,6 @@ type Blockchain struct {
 	numWithdraw uint
 }
 
-
 type Genesis struct {
 	AccountAlloc map[uint32]GenesisAccount
 	AccountMax   uint32
@@ -164,14 +163,19 @@ func (bc *Blockchain) handleDepositToNew(op *types.DepositToNewOp) (proof hexuti
 	account = NewAccount(op.PubKey, op.WithdrawTo)
 	account.tree.Update(uint64(op.TokenID), common.BigToHash(op.Amount))
 	account.GetPubAccountHash()
+	bc.state.accounts[accountID] = account
 
 	accountHash := crypto.Keccak256Hash(account.tree.RootHash().Bytes(), account.GetPubAccountHash().Bytes())
 	bc.state.tree.Update(uint64(accountID), accountHash)
+
 	proof = append(proof, op.PubKey...)
 	proof = append(proof, op.WithdrawTo.Bytes()...)
 	proof = append(proof, util.Uint16ToByte(op.TokenID)...)
 	proof = append(proof, common.BigToHash(op.Amount).Bytes()...)
 	proof = appendSiblings(proof, siblings)
+
+	op.DepositID = bc.numDeposit
+	bc.numDeposit++
 	return proof
 }
 
