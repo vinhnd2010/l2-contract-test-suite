@@ -119,6 +119,7 @@ func buildTest1() *test.Suit {
 	return &test.Suit{
 		Msg:              "test case when withdraw",
 		GenesisStateHash: genesisHash,
+		AccountMax:       genesis.AccountMax,
 		Steps: []test.Step{
 			{Action: test.SubmitDeposit, Data: deposit},
 			{Action: test.SubmitBlock, Data: submitBlockStep},

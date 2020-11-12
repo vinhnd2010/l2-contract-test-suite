@@ -1,7 +1,6 @@
 package blockchain
 
 import (
-	"fmt"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -409,8 +408,6 @@ func (bc *Blockchain) handleExit(op *types.ExitOp) (proof hexutil.Bytes) {
 	account.isConfirmedExit = true
 	// set balanceRoot to operation
 	op.AccountRoot = balanceRoot
-
-	fmt.Println(len(proof))
 	return proof
 }
 

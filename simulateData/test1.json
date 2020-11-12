@@ -1,0 +1,587 @@
+{
+  "Msg": "create random data set of block combination",
+  "GenesisStateHash": "0x44cd37b131185831f823bd2fda11ff63c13daac1cda1b50f1cd73272cabc5713",
+  "Steps": [
+    {
+      "Action": 7,
+      "Data": {
+        "DepositID": 0,
+        "PubKey": "0x5db26f64f4453a0f3182fe5f07a9f3ac862aa2ae679ca424a66d999121ed5ca6",
+        "WithdrawTo": "0x41906015d064ad593fba0c6dec0c714bcb18f269",
+        "TokenID": 0,
+        "Amount": 300000000
+      }
+    },
+    {
+      "Action": 7,
+      "Data": {
+        "DepositID": 1,
+        "PubKey": "0x8f21da423cceb451c280dd50ae017ac89ae508779dbaec52f6b6a9e98bfaa4a3",
+        "WithdrawTo": "0x419021b62197c40b081fabc0e7e36910b11f27dd",
+        "TokenID": 0,
+        "Amount": 300000000
+      }
+    },
+    {
+      "Action": 7,
+      "Data": {
+        "DepositID": 2,
+        "PubKey": "0x4554776709196eff2a48fdc235d5192385fab31aa66413d3757d3c3b4ceb9482",
+        "WithdrawTo": "0x419086388e5073f581403730a9b85bb26a944ab2",
+        "TokenID": 0,
+        "Amount": 300000000
+      }
+    },
+    {
+      "Action": 7,
+      "Data": {
+        "DepositID": 3,
+        "PubKey": "0xb974e2f25ed9bc54c6d5cbefcd134d3e8c8ac24fd18c1c424eb650993be2b12b",
+        "WithdrawTo": "0x4190d2209718a6c8472cb03706a57f8e1f6b9589",
+        "TokenID": 0,
+        "Amount": 300000000
+      }
+    },
+    {
+      "Action": 7,
+      "Data": {
+        "DepositID": 4,
+        "PubKey": "0xf877a4103cd6192a159602b4771944edd705c074227285119b6b65485419c20c",
+        "WithdrawTo": "0x4190e044505b27db6028865b1f48a4398a68d887",
+        "TokenID": 0,
+        "Amount": 300000000
+      }
+    },
+    {
+      "Action": 7,
+      "Data": {
+        "DepositID": 5,
+        "PubKey": "0xedb615e8cd65fd90c95036613890642c11e56f031fbbac9575d9559a0cc0b588",
+        "WithdrawTo": "0x4190ea9bad72fb2a38dd96bc1d41241bf7675382",
+        "TokenID": 0,
+        "Amount": 300000000
+      }
+    },
+    {
+      "Action": 7,
+      "Data": {
+        "DepositID": 6,
+        "PubKey": "0x71515c496daccd10e991f508952711a76176854794f90c4473364d177d72da97",
+        "WithdrawTo": "0x4190ebc1c0e79ddd1ddfec0e9521663ff9a15c50",
+        "TokenID": 0,
+        "Amount": 300000000
+      }
+    },
+    {
+      "Action": 7,
+      "Data": {
+        "DepositID": 7,
+        "PubKey": "0xd63c298ee09d12488796602d4591854e23424f28a8a73dd7df1880721311a88b",
+        "WithdrawTo": "0x41901e9e37271b587dbc978e9fb369ede85bf021",
+        "TokenID": 0,
+        "Amount": 300000000
+      }
+    },
+    {
+      "Action": 7,
+      "Data": {
+        "DepositID": 8,
+        "PubKey": "0xdedbbb5964853d19a99875b2cdd4640c42b3cac5d4469c91a8f53c2f5b3c45af",
+        "WithdrawTo": "0x41908d6b087c97337a7b5218cba9c69d391c16b2",
+        "TokenID": 0,
+        "Amount": 300000000
+      }
+    },
+    {
+      "Action": 1,
+      "Data": {
+        "BlockNumber": 1,
+        "MiniBlocks": [
+          "0x00000000000000000000000000000000000000000000000000000000000000006ed2f6f922887a7398091be361fb41a4764a495611b33e9619475a624385f29f700000000000700000000001700000000002700000000003700000000004700000000005700000000006700000000007700000000008"
+        ],
+        "Timestamp": 1600661872
+      }
+    },
+    {
+      "Action": 3,
+      "Data": {
+        "DepositID": 9,
+        "AccountID": 0,
+        "TokenID": 1,
+        "Amount": 50000000000
+      }
+    },
+    {
+      "Action": 3,
+      "Data": {
+        "DepositID": 10,
+        "AccountID": 0,
+        "TokenID": 2,
+        "Amount": 50000000000
+      }
+    },
+    {
+      "Action": 3,
+      "Data": {
+        "DepositID": 11,
+        "AccountID": 0,
+        "TokenID": 3,
+        "Amount": 50000000000
+      }
+    },
+    {
+      "Action": 3,
+      "Data": {
+        "DepositID": 12,
+        "AccountID": 0,
+        "TokenID": 4,
+        "Amount": 50000000000
+      }
+    },
+    {
+      "Action": 3,
+      "Data": {
+        "DepositID": 13,
+        "AccountID": 0,
+        "TokenID": 5,
+        "Amount": 50000000000
+      }
+    },
+    {
+      "Action": 3,
+      "Data": {
+        "DepositID": 14,
+        "AccountID": 1,
+        "TokenID": 1,
+        "Amount": 50000000000
+      }
+    },
+    {
+      "Action": 3,
+      "Data": {
+        "DepositID": 15,
+        "AccountID": 1,
+        "TokenID": 2,
+        "Amount": 50000000000
+      }
+    },
+    {
+      "Action": 3,
+      "Data": {
+        "DepositID": 16,
+        "AccountID": 1,
+        "TokenID": 3,
+        "Amount": 50000000000
+      }
+    },
+    {
+      "Action": 3,
+      "Data": {
+        "DepositID": 17,
+        "AccountID": 1,
+        "TokenID": 4,
+        "Amount": 50000000000
+      }
+    },
+    {
+      "Action": 3,
+      "Data": {
+        "DepositID": 18,
+        "AccountID": 1,
+        "TokenID": 5,
+        "Amount": 50000000000
+      }
+    },
+    {
+      "Action": 3,
+      "Data": {
+        "DepositID": 19,
+        "AccountID": 2,
+        "TokenID": 1,
+        "Amount": 50000000000
+      }
+    },
+    {
+      "Action": 3,
+      "Data": {
+        "DepositID": 20,
+        "AccountID": 2,
+        "TokenID": 2,
+        "Amount": 50000000000
+      }
+    },
+    {
+      "Action": 3,
+      "Data": {
+        "DepositID": 21,
+        "AccountID": 2,
+        "TokenID": 3,
+        "Amount": 50000000000
+      }
+    },
+    {
+      "Action": 3,
+      "Data": {
+        "DepositID": 22,
+        "AccountID": 2,
+        "TokenID": 4,
+        "Amount": 50000000000
+      }
+    },
+    {
+      "Action": 3,
+      "Data": {
+        "DepositID": 23,
+        "AccountID": 2,
+        "TokenID": 5,
+        "Amount": 50000000000
+      }
+    },
+    {
+      "Action": 3,
+      "Data": {
+        "DepositID": 24,
+        "AccountID": 3,
+        "TokenID": 1,
+        "Amount": 50000000000
+      }
+    },
+    {
+      "Action": 3,
+      "Data": {
+        "DepositID": 25,
+        "AccountID": 3,
+        "TokenID": 2,
+        "Amount": 50000000000
+      }
+    },
+    {
+      "Action": 3,
+      "Data": {
+        "DepositID": 26,
+        "AccountID": 3,
+        "TokenID": 3,
+        "Amount": 50000000000
+      }
+    },
+    {
+      "Action": 3,
+      "Data": {
+        "DepositID": 27,
+        "AccountID": 3,
+        "TokenID": 4,
+        "Amount": 50000000000
+      }
+    },
+    {
+      "Action": 3,
+      "Data": {
+        "DepositID": 28,
+        "AccountID": 3,
+        "TokenID": 5,
+        "Amount": 50000000000
+      }
+    },
+    {
+      "Action": 3,
+      "Data": {
+        "DepositID": 29,
+        "AccountID": 4,
+        "TokenID": 1,
+        "Amount": 50000000000
+      }
+    },
+    {
+      "Action": 3,
+      "Data": {
+        "DepositID": 30,
+        "AccountID": 4,
+        "TokenID": 2,
+        "Amount": 50000000000
+      }
+    },
+    {
+      "Action": 3,
+      "Data": {
+        "DepositID": 31,
+        "AccountID": 4,
+        "TokenID": 3,
+        "Amount": 50000000000
+      }
+    },
+    {
+      "Action": 3,
+      "Data": {
+        "DepositID": 32,
+        "AccountID": 4,
+        "TokenID": 4,
+        "Amount": 50000000000
+      }
+    },
+    {
+      "Action": 3,
+      "Data": {
+        "DepositID": 33,
+        "AccountID": 4,
+        "TokenID": 5,
+        "Amount": 50000000000
+      }
+    },
+    {
+      "Action": 3,
+      "Data": {
+        "DepositID": 34,
+        "AccountID": 5,
+        "TokenID": 1,
+        "Amount": 50000000000
+      }
+    },
+    {
+      "Action": 3,
+      "Data": {
+        "DepositID": 35,
+        "AccountID": 5,
+        "TokenID": 2,
+        "Amount": 50000000000
+      }
+    },
+    {
+      "Action": 3,
+      "Data": {
+        "DepositID": 36,
+        "AccountID": 5,
+        "TokenID": 3,
+        "Amount": 50000000000
+      }
+    },
+    {
+      "Action": 3,
+      "Data": {
+        "DepositID": 37,
+        "AccountID": 5,
+        "TokenID": 4,
+        "Amount": 50000000000
+      }
+    },
+    {
+      "Action": 3,
+      "Data": {
+        "DepositID": 38,
+        "AccountID": 5,
+        "TokenID": 5,
+        "Amount": 50000000000
+      }
+    },
+    {
+      "Action": 3,
+      "Data": {
+        "DepositID": 39,
+        "AccountID": 6,
+        "TokenID": 1,
+        "Amount": 50000000000
+      }
+    },
+    {
+      "Action": 3,
+      "Data": {
+        "DepositID": 40,
+        "AccountID": 6,
+        "TokenID": 2,
+        "Amount": 50000000000
+      }
+    },
+    {
+      "Action": 3,
+      "Data": {
+        "DepositID": 41,
+        "AccountID": 6,
+        "TokenID": 3,
+        "Amount": 50000000000
+      }
+    },
+    {
+      "Action": 3,
+      "Data": {
+        "DepositID": 42,
+        "AccountID": 6,
+        "TokenID": 4,
+        "Amount": 50000000000
+      }
+    },
+    {
+      "Action": 3,
+      "Data": {
+        "DepositID": 43,
+        "AccountID": 6,
+        "TokenID": 5,
+        "Amount": 50000000000
+      }
+    },
+    {
+      "Action": 3,
+      "Data": {
+        "DepositID": 44,
+        "AccountID": 7,
+        "TokenID": 1,
+        "Amount": 50000000000
+      }
+    },
+    {
+      "Action": 3,
+      "Data": {
+        "DepositID": 45,
+        "AccountID": 7,
+        "TokenID": 2,
+        "Amount": 50000000000
+      }
+    },
+    {
+      "Action": 3,
+      "Data": {
+        "DepositID": 46,
+        "AccountID": 7,
+        "TokenID": 3,
+        "Amount": 50000000000
+      }
+    },
+    {
+      "Action": 3,
+      "Data": {
+        "DepositID": 47,
+        "AccountID": 7,
+        "TokenID": 4,
+        "Amount": 50000000000
+      }
+    },
+    {
+      "Action": 3,
+      "Data": {
+        "DepositID": 48,
+        "AccountID": 7,
+        "TokenID": 5,
+        "Amount": 50000000000
+      }
+    },
+    {
+      "Action": 3,
+      "Data": {
+        "DepositID": 49,
+        "AccountID": 8,
+        "TokenID": 1,
+        "Amount": 50000000000
+      }
+    },
+    {
+      "Action": 3,
+      "Data": {
+        "DepositID": 50,
+        "AccountID": 8,
+        "TokenID": 2,
+        "Amount": 50000000000
+      }
+    },
+    {
+      "Action": 3,
+      "Data": {
+        "DepositID": 51,
+        "AccountID": 8,
+        "TokenID": 3,
+        "Amount": 50000000000
+      }
+    },
+    {
+      "Action": 3,
+      "Data": {
+        "DepositID": 52,
+        "AccountID": 8,
+        "TokenID": 4,
+        "Amount": 50000000000
+      }
+    },
+    {
+      "Action": 3,
+      "Data": {
+        "DepositID": 53,
+        "AccountID": 8,
+        "TokenID": 5,
+        "Amount": 50000000000
+      }
+    },
+    {
+      "Action": 3,
+      "Data": {
+        "DepositID": 54,
+        "AccountID": 9,
+        "TokenID": 1,
+        "Amount": 50000000000
+      }
+    },
+    {
+      "Action": 3,
+      "Data": {
+        "DepositID": 55,
+        "AccountID": 9,
+        "TokenID": 2,
+        "Amount": 50000000000
+      }
+    },
+    {
+      "Action": 3,
+      "Data": {
+        "DepositID": 56,
+        "AccountID": 9,
+        "TokenID": 3,
+        "Amount": 50000000000
+      }
+    },
+    {
+      "Action": 3,
+      "Data": {
+        "DepositID": 57,
+        "AccountID": 9,
+        "TokenID": 4,
+        "Amount": 50000000000
+      }
+    },
+    {
+      "Action": 3,
+      "Data": {
+        "DepositID": 58,
+        "AccountID": 9,
+        "TokenID": 5,
+        "Amount": 50000000000
+      }
+    },
+    {
+      "Action": 1,
+      "Data": {
+        "BlockNumber": 2,
+        "MiniBlocks": [
+          "0x0000000000000000000000000000000000000000000000000000000000000000faa3d3f658e6d4ab9bb84264cfbfcb4aa2ef55845bce24d9077129da29b930a080000000000980000000000a80000000000b80000000000c80000000000d",
+          "0x000000000000000000000000000000000000000000000000000000000000000003e646dcadba9ff970627a76fa733441252c2c09dea396747a420c8d64d10cb480000000000e80000000000f800000000010800000000011800000000012",
+          "0x0000000000000000000000000000000000000000000000000000000000000000a5354d23e40be450bb96b52f51bd2a730a3648dd20ad3ba17194e32df4ba27f5800000000013800000000014800000000015800000000016800000000017",
+          "0x00000000000000000000000000000000000000000000000000000000000000008527bb2f3feb55dad42630edd0ad2761edca389309036dd22e8fbcb4bf00634880000000001880000000001980000000001a80000000001b80000000001c",
+          "0x0000000000000000000000000000000000000000000000000000000000000000a3a55b71917e6e2666ee6db739903bb2ca2ddc3bdab2b98e54826615ef4f241780000000001d80000000001e80000000001f800000000020800000000021",
+          "0x000000000000000000000000000000000000000000000000000000000000000091a56905317e694c221b688335ed24472243f1043e1f5776cb9cc3c9ec4a2817800000000022800000000023800000000024800000000025800000000026",
+          "0x0000000000000000000000000000000000000000000000000000000000000000c5d3548226e2fb507e0b369c72d32915bdb4682bb59788d0acd83e9cf0e6519880000000002780000000002880000000002980000000002a80000000002b",
+          "0x0000000000000000000000000000000000000000000000000000000000000000b3aff84253c7e77b8d2988a0abcd72e0d47b5bd974dfa3f0a5af98b385e9108180000000002c80000000002d80000000002e80000000002f800000000030",
+          "0x00000000000000000000000000000000000000000000000000000000000000006633fa05e2376c395575c1a5340962ca26219672829d5d2d3f53367e16f4c422800000000031800000000032800000000033800000000034800000000035",
+          "0x00000000000000000000000000000000000000000000000000000000000000007a4ccf896c010f5dc75d232c396542d80dfb69be5468d7c8fcb16db44657702580000000003680000000003780000000003880000000003980000000003a"
+        ],
+        "Timestamp": 1600661873
+      }
+    },
+    {
+      "Action": 1,
+      "Data": {
+        "BlockNumber": 3,
+        "MiniBlocks": [
+          "0x0000000000000000000000000000000000000000000000000000000000000000658847a7d8e388bb118d87f0cd0f9ac293aa58714034bcf6cb876b295758d19b1004020000000400000005000000020600000002070000000212000000051100c200c35f6829715f68297100019000015180",
+          "0x00000000000000000000000000000000000000000000000000000000000000004c815f1e9d4b40501cc6631b276cf4fc01a9fbf05bbffd816e36b89b1c866bb0100c040000000400000005000000020600000002070000000212000000051100c200c35f6829715f68297100019000015180400000000002000000060000000806000000021200005f68297200151800",
+          "0x0000000000000000000000000000000000000000000000000000000000000000a04e40831390163bfd1a84c8cf53a4c6341bfa8be9f9f384eed543afd6a364d01014000000000600000007000000020600000002070000000212000000051100c200c35f6829735f682973000190000151801014000000000100000002000000020600000002060000000212000000051100c200c35f6829735f68297300019000015180600000000003000000000040"
+        ],
+        "Timestamp": 1600661890
+      }
+    }
+  ]
+}

@@ -12,6 +12,7 @@ import (
 type Suit struct {
 	Msg              string
 	GenesisStateHash common.Hash
+	AccountMax       uint32
 	Steps            []Step
 }
 type StepType uint
