@@ -17,17 +17,17 @@ type Transaction interface {
 type OpType uint8
 
 const (
-	NoOp OpType = iota
-	SettlementOp11
-	SettlementOp12
-	SettlementOp13
-	SettlementOp21
-	SettlementOp22
-	SettlementOp3
-	DepositToNew
-	Deposit
-	Withdraw
-	Exit
+	NoOp           OpType = iota // 0
+	SettlementOp11               // 1
+	SettlementOp12               // 2
+	SettlementOp13               // 3
+	SettlementOp21               // 4
+	SettlementOp22               // 5
+	SettlementOp3                // 6
+	DepositToNew                 //7
+	Deposit                      //8
+	Withdraw                     // 9
+	Exit                         // 10
 )
 
 var (
@@ -36,8 +36,8 @@ var (
 
 /// 10 bit for mantisa, 6 bit for
 type PackedFee struct {
-	Mantisa uint16
-	Exp     uint8
+	Mantisa uint16 `json:"mantisa"`
+	Exp     uint8  `json:"fee"`
 }
 
 // 10 bit for mantisa, 6 bit for exp
@@ -61,11 +61,11 @@ func (f *PackedFee) MarshalText() ([]byte, error) {
 
 /// @dev 32 bits for mantisa, 8 bits for exp
 type PackedAmount struct {
-	Mantisa uint32
-	Exp     uint8
+	Mantisa uint32 `json:"mantissa"`
+	Exp     uint8  `json:"exp"`
 }
 
-func (a *PackedAmount) toBytes() []byte {
+func (a *PackedAmount) ToBytes() []byte {
 	var out []byte
 	out = append(out, common.Uint32ToBytes(a.Mantisa)...)
 	out = append(out, common.Uint8ToByte(a.Exp))
@@ -181,10 +181,10 @@ func (s *Settlement1) ToBytes() []byte {
 	out = append(out, common.Uint32ToBytes(head)[1:]...)
 	out = append(out, common.Uint32ToBytes(s.Account1)...)
 	out = append(out, common.Uint32ToBytes(s.Account2)...)
-	out = append(out, s.Amount1.toBytes()...)
-	out = append(out, s.Amount2.toBytes()...)
-	out = append(out, s.Rate1.toBytes()...)
-	out = append(out, s.Rate2.toBytes()...)
+	out = append(out, s.Amount1.ToBytes()...)
+	out = append(out, s.Amount2.ToBytes()...)
+	out = append(out, s.Rate1.ToBytes()...)
+	out = append(out, s.Rate2.ToBytes()...)
 	out = append(out, s.Fee1.toBytes()...)
 	out = append(out, s.Fee2.toBytes()...)
 	out = append(out, common.Uint32ToBytes(s.ValidSince1)...)
@@ -218,8 +218,8 @@ func (s *Settlement2) ToBytes() []byte {
 	head = head | (s.LooID1)
 	out = append(out, common.Uint48ToBytes(head)...)
 	out = append(out, common.Uint32ToBytes(s.AccountID2)...)
-	out = append(out, s.Amount2.toBytes()...)
-	out = append(out, s.Rate2.toBytes()...)
+	out = append(out, s.Amount2.ToBytes()...)
+	out = append(out, s.Rate2.ToBytes()...)
 	out = append(out, s.Fee2.toBytes()...)
 	out = append(out, common.Uint32ToBytes(s.ValidSince2)...)
 	out = append(out, common.Uint32ToBytes(s.ValidPeriod2<<4)...)
@@ -344,7 +344,7 @@ func (w *WithdrawOp) ToBytes() []byte {
 	data |= uint16(Withdraw) << 12
 	data |= w.TokenID << 2
 	out = append(out, common.Uint16ToByte(data)...)
-	out = append(out, w.Amount.toBytes()...)
+	out = append(out, w.Amount.ToBytes()...)
 	out = append(out, w.DestAddr.Bytes()...)
 	out = append(out, common.Uint32ToBytes(w.AccountID)...)
 	out = append(out, common.Uint32ToBytes(w.ValidSince)...)

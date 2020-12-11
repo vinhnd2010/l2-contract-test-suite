@@ -2,7 +2,10 @@ package common
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/binary"
+
+	"github.com/ethereum/go-ethereum/common"
 )
 
 func Uint16ToBytes(i uint16) []byte {
@@ -52,4 +55,19 @@ func Uint64ToBytes(i uint64) []byte {
 		panic("Uint64ToBytes")
 	}
 	return bur.Bytes()
+}
+
+func Sha256ToHash(data []byte) common.Hash {
+	var out [32]byte
+	sha256Hash := sha256.New()
+	sha256Hash.Write(data)
+	tmp := sha256Hash.Sum(nil)
+	if len(tmp) != 32 {
+		panic("hash length is not 32")
+	}
+
+	for i := 0; i < 32; i++ {
+		out[i] = tmp[i]
+	}
+	return out
 }

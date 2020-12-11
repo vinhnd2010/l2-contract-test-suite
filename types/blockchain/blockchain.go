@@ -1,6 +1,7 @@
 package blockchain
 
 import (
+	"fmt"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -16,6 +17,7 @@ const StateTreeDeep = 33
 const LOOTreeDeep = 45
 const FeeTokenIndex = 0
 const AdminIndex uint32 = 0
+const NumTxPerBLock = 4
 
 type Blockchain struct {
 	state       *State
@@ -82,11 +84,24 @@ func NewBlockchain(genesis *Genesis) *Blockchain {
 
 func (bc *Blockchain) AddMiniBlock(block *types.MiniBlock) []hexutil.Bytes {
 	var (
-		proofs   []hexutil.Bytes
-		totalFee = big.NewInt(0)
+		proofs          []hexutil.Bytes
+		totalFee        = big.NewInt(0)
+		commitmentInput []byte
 	)
 
 	for _, tx := range block.Txs {
+		switch obj := tx.(type) {
+		case *types.Settlement1:
+			commitmentInput = append(commitmentInput, bc.buildSettlement1ZkMsg(obj)...)
+		case *types.Settlement2:
+			commitmentInput = append(commitmentInput, bc.buildSettlement2ZkMsg(obj)...)
+		//TODO build test case for withdraw
+		default: // append 128 default bytes
+			for i := 0; i < 128; i++ {
+				commitmentInput = append(commitmentInput, 0)
+			}
+		}
+
 		switch obj := tx.(type) {
 		case *types.Settlement1:
 			proof, fee := bc.handleSettlement1(obj)
@@ -119,8 +134,15 @@ func (bc *Blockchain) AddMiniBlock(block *types.MiniBlock) []hexutil.Bytes {
 	}
 	proofs = append(proofs, bc.handleTotalFee(totalFee))
 	block.StateHash = bc.GetStateData().Hash()
-	//TODO: build commitment here
-	block.Commitment = common.HexToHash(zeroHash)
+
+	if len(block.Txs) <= NumTxPerBLock {
+		for len(commitmentInput) < NumTxPerBLock*128 {
+			commitmentInput = append(commitmentInput, 0)
+		}
+	} else {
+		fmt.Println("warning: number of txs >4")
+	}
+	block.Commitment = util.Sha256ToHash(commitmentInput)
 	return proofs
 }
 

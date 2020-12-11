@@ -30,7 +30,7 @@ var genesis = &blockchain.Genesis{
 				5: big.NewInt(500),
 			},
 			Pubkey:  testsample.PublicKeys[2],
-			Address: common.HexToAddress("0xc783df8a850f42e7F7e57013759C285caa701eB6"), // address for accounts[0] from buidler config
+			Address: common.HexToAddress("0xc783df8a850f42e7f7e57013759c285caa701eb6"), // address for accounts[0] from buidler config
 		},
 		44: {
 			Tokens:  map[uint16]*big.Int{},

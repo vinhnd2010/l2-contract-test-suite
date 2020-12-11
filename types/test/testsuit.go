@@ -26,6 +26,7 @@ const (
 	SubmitExit
 	CompleteExit
 	SubmitDepositToNew
+	AccuseCommitmentFraudProof
 )
 
 type Step struct {
@@ -62,4 +63,13 @@ type CompleteExitStep struct {
 	TokenIDs     []uint16
 	TokenAmounts []*big.Int
 	Siblings     []common.Hash
+}
+
+type AccuseCommitmentFraudProofStep struct {
+	BlockNumber      uint
+	MiniBlockNumber  uint
+	MiniBlock        *types.MiniBlock
+	PostStateData    *blockchain.StateData
+	MiniBlockProof   hexutil.Bytes
+	CommitmentProofs []hexutil.Bytes
 }

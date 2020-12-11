@@ -64,5 +64,5 @@ func TestMerkleTree_GetProofBatch(t *testing.T) {
 	require.Equal(t, values[1], v2)
 
 	recoverRootHash := getRootHashFromBatchProof(keys, values, siblings, 4)
-	require.Equal(t, recoverRootHash.Hex(), tr.rootHash().Hex())
+	require.Equal(t, recoverRootHash.Hex(), tr.RootHash().Hex())
 }
