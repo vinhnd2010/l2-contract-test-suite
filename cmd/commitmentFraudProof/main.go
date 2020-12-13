@@ -15,8 +15,12 @@ import (
 	"github.com/KyberNetwork/l2-contract-test-suite/types/test"
 )
 
-const commitmentBuilderTest1Output = "testdata/commitmentBuilder1.json"
-const commitmentFraudProofTest1Output = "testdata/commitmentFraudProof1.json"
+const (
+	commitmentBuilderTest1Output    = "testdata/commitmentBuilder1.json"
+	commitmentBuilderTest2Output    = "testdata/commitmentBuilder2.json"
+	commitmentFraudProofTest1Output = "testdata/commitmentFraudProof1.json"
+	commitmentFraudProofTest2Output = "testdata/commitmentFraudProof2.json"
+)
 
 type CommitmentBuilderTest1 struct {
 	TxData                  hexutil.Bytes `json:"txData"`
@@ -25,6 +29,16 @@ type CommitmentBuilderTest1 struct {
 	Account2                uint32        `json:"accountID2"`
 	AccountPubKey1          hexutil.Bytes `json:"accountPubKey1"`
 	AccountPubKey2          hexutil.Bytes `json:"accountPubKey2"`
+}
+
+type CommitmentBuilderTest2 struct {
+	TxData                  hexutil.Bytes `json:"txData"`
+	ExpectedCommitmentInput hexutil.Bytes `json:"commitmentInput"`
+	AccountID               uint32        `json:"accountID"`
+	AccountPubKey           hexutil.Bytes `json:"accountPubKey"`
+	LooID                   uint64        `json:"looID"`
+	LooSrcToken             uint16        `json:"looSrcToken"`
+	LooDstToken             uint16        `json:"looDstToken"`
 }
 
 func testCommitmentBuilder1() {
@@ -64,6 +78,41 @@ func testCommitmentBuilder1() {
 	}
 }
 
+func testCommitmentBuilder2() {
+	settlement2 := &types.Settlement2{
+		OpType:       types.SettlementOp21,
+		AccountID2:   45,
+		Amount2:      types.PackedAmount{Mantisa: 2, Exp: 16},
+		Rate2:        types.PackedAmount{Mantisa: 5, Exp: 19},
+		Fee2:         types.PackedFee{Mantisa: 2, Exp: 6},
+		ValidSince2:  1605323952,
+		ValidPeriod2: 268430000,
+		LooID1:       34,
+	}
+
+	data := blockchain.BuildSettlement2ZkMsg(settlement2, 4, 5, testsample.PublicKeys[3])
+
+	var err error
+	var testSuits = []CommitmentBuilderTest2{
+		{
+			TxData:                  settlement2.ToBytes(),
+			ExpectedCommitmentInput: data,
+			AccountID:               settlement2.AccountID2,
+			AccountPubKey:           testsample.PublicKeys[3],
+			LooID:                   settlement2.LooID1,
+			LooSrcToken:             4,
+			LooDstToken:             5,
+		},
+	}
+	b, err := json.MarshalIndent(testSuits, "", "  ")
+	if err != nil {
+		panic(err)
+	}
+	if err := ioutil.WriteFile(commitmentBuilderTest2Output, b, 0644); err != nil {
+		panic(err)
+	}
+}
+
 var genesis = &blockchain.Genesis{
 	AccountAlloc: map[uint32]blockchain.GenesisAccount{
 		0: {
@@ -97,7 +146,7 @@ var genesis = &blockchain.Genesis{
 	LooMax:     0,
 }
 
-func buildTest1() *test.Suit {
+func buildCommitmentFraudProofTest1() {
 	bc := blockchain.NewBlockchain(genesis)
 	genesisHash := bc.GetStateData().Hash()
 	miniBlock1 := &types.MiniBlock{
@@ -154,20 +203,16 @@ func buildTest1() *test.Suit {
 		MiniBlockProof:   proof.BuildMiniBlockProof(submitBlockStep.MiniBlocks, 0, submitBlockStep.Timestamp),
 		CommitmentProofs: []hexutil.Bytes{bc.BuildCommitmentProof(miniBlock1)},
 	}
-	return &test.Suit{
-		Msg:              "test case when left over order at order 2",
-		GenesisStateHash: genesisHash,
-		Steps: []test.Step{
-			{Action: test.SubmitBlock, Data: submitBlockStep},
-			{Action: test.AccuseCommitmentFraudProof, Data: commitmentFPStep},
+	var testSuits = []*test.Suit{
+		{
+			Msg:              "test case when left over order at order 2",
+			GenesisStateHash: genesisHash,
+			Steps: []test.Step{
+				{Action: test.SubmitBlock, Data: submitBlockStep},
+				{Action: test.AccuseCommitmentFraudProof, Data: commitmentFPStep},
+			},
 		},
 	}
-}
-
-func main() {
-	var testSuits []*test.Suit
-	testSuits = append(testSuits, buildTest1())
-
 	b, err := json.MarshalIndent(testSuits, "", "  ")
 	if err != nil {
 		panic(err)
@@ -175,4 +220,117 @@ func main() {
 	if err := ioutil.WriteFile(commitmentFraudProofTest1Output, b, 0644); err != nil {
 		panic(err)
 	}
+}
+
+var genesis2 = &blockchain.Genesis{
+	AccountAlloc: map[uint32]blockchain.GenesisAccount{
+		0: {
+			Tokens: map[uint16]*big.Int{
+				0: big.NewInt(30000),
+				1: big.NewInt(2000000),
+			},
+			Pubkey:  testsample.PublicKeys[2],
+			Address: common.HexToAddress("0xdC70a72AbF352A0E3f75d737430EB896BA9Bf9Ea"),
+		},
+
+		17: {
+			Tokens: map[uint16]*big.Int{
+				0: big.NewInt(70000),
+				1: big.NewInt(6000000),
+			},
+			Pubkey:  testsample.PublicKeys[0],
+			Address: common.HexToAddress("0xdC70a72AbF352A0E3f75d737430EB896BA9Bf9Ea"),
+		},
+		123: {
+			Tokens: map[uint16]*big.Int{
+				0: big.NewInt(30000),
+				1: big.NewInt(1000000),
+				2: big.NewInt(5000000),
+			},
+			Pubkey:  testsample.PublicKeys[1],
+			Address: common.HexToAddress("0x052f46FeB45822E7f117536386C51B6Bd3125157"),
+		},
+	},
+	AccountMax: 1000,
+	LooMax:     289,
+	LooAlloc: map[uint64]*types.LeftOverOrder{
+		243: {
+			AccountID:   17,
+			SrcToken:    1,
+			DestToken:   2,
+			Amount:      big.NewInt(34500),
+			Fee:         big.NewInt(67432),
+			Rate:        types.PackedAmount{Mantisa: 2, Exp: 17}.Big(),
+			ValidSince:  1601436627,
+			ValidPeriod: 823000,
+		},
+	},
+}
+
+func buildCommitmentFraudProofTest2() {
+	bc := blockchain.NewBlockchain(genesis2)
+	genesisHash := bc.GetStateData().Hash()
+
+	miniBlock1 := &types.MiniBlock{
+		Txs: []types.Transaction{
+			&types.Settlement2{
+				OpType:     types.SettlementOp21,
+				LooID1:     243,
+				AccountID2: 123,
+				Rate2: types.PackedAmount{
+					Mantisa: 1,
+					Exp:     18,
+				},
+				Amount2: types.PackedAmount{
+					Mantisa: 3,
+					Exp:     6,
+				},
+				Fee2: types.PackedFee{
+					Mantisa: 4,
+					Exp:     2,
+				},
+				ValidSince2:  1600661873,
+				ValidPeriod2: 8640000,
+			},
+		},
+	}
+	bc.AddMiniBlock(miniBlock1)
+
+	submitBlockStep := test.SubmitBlockStep{
+		MiniBlocks:  []*types.MiniBlock{miniBlock1},
+		Timestamp:   1600661874,
+		BlockNumber: 1,
+	}
+	commitmentFPStep := test.AccuseCommitmentFraudProofStep{
+		BlockNumber:      1,
+		MiniBlockNumber:  0,
+		MiniBlock:        miniBlock1,
+		PostStateData:    bc.GetStateData(),
+		MiniBlockProof:   proof.BuildMiniBlockProof(submitBlockStep.MiniBlocks, 0, submitBlockStep.Timestamp),
+		CommitmentProofs: []hexutil.Bytes{bc.BuildCommitmentProof(miniBlock1)},
+	}
+	var testSuits = []*test.Suit{
+		{
+			Msg:              "test case when left over order at order 2",
+			GenesisStateHash: genesisHash,
+			Steps: []test.Step{
+				{Action: test.SubmitBlock, Data: submitBlockStep},
+				{Action: test.AccuseCommitmentFraudProof, Data: commitmentFPStep},
+			},
+		},
+	}
+	b, err := json.MarshalIndent(testSuits, "", "  ")
+	if err != nil {
+		panic(err)
+	}
+	if err := ioutil.WriteFile(commitmentFraudProofTest2Output, b, 0644); err != nil {
+		panic(err)
+	}
+}
+
+func main() {
+	testCommitmentBuilder1()
+	testCommitmentBuilder2()
+	buildCommitmentFraudProofTest1()
+	buildCommitmentFraudProofTest2()
 }

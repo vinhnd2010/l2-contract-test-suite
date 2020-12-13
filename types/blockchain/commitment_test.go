@@ -2,6 +2,7 @@ package blockchain
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"math/big"
 	"testing"
@@ -34,6 +35,8 @@ type TestCommitment struct {
 		Order2   Order  `json:"order_2"`
 		PubData1 []byte `json:"message_to_be_signed_1"`
 		PubData2 []byte `json:"message_to_be_signed_2"`
+		Order    Order  `json:"order"`
+		PubData  []byte `json:"message_to_be_signed"`
 	} `json:"txs"`
 }
 
@@ -125,4 +128,50 @@ func Test_Commitment(t *testing.T) {
 	bc.AddMiniBlock(miniBlock1)
 
 	require.Equal(t, miniBlock1.Commitment.Hex()[2:], test.FinalCommitment)
+}
+
+func Test_Commitment2(t *testing.T) {
+	data, err := ioutil.ReadFile("../../testdata/miniblock2.json")
+	require.NoError(t, err)
+
+	var test TestCommitment
+	err = json.Unmarshal(data, &test)
+	require.NoError(t, err)
+
+	fmt.Println(len(test.MiniBlockPubData))
+
+	/*
+
+		/// not equal due to valid period
+
+		tx:= test.Txs[5]
+		order1 := test.Txs[5].Order
+		msg := buildZkMsg(order1.AccountID, order1.SrcTokenID, order1.DstTokenID, order1.Amount, order1.Rate,
+			order1.ValidSince, order1.ValidPeriod, order1.Fee, order1.CouldBePartiallyFilled,
+		)
+
+		fmt.Println(hexutil.Encode(tx.PubData), hexutil.Encode(msg))
+		require.Equal(t, tx.PubData, msg)
+	*/
+
+	//for i := 0; i < len(test.MiniBlockPubData); i += 32 {
+	//	fmt.Println(i/32, hexutil.Encode(test.MiniBlockPubData[i:i+32]))
+	//}
+	//
+	//fmt.Println(common2.Sha256ToHash(test.MiniBlockPubData).Hex())
+	//
+	//fmt.Println(hexutil.Encode(ReverseBitsForEachByte(test.Txs[5].PubData)))
+	//fmt.Println(hexutil.Encode(ReverseBitsForEachByte(test.Txs[6].PubData)))
+
+	msg := BuildWithdrawZkMsg(&types.WithdrawOp{
+		TokenID:    6,
+		Amount:     types.PackedAmount{Mantisa: 1, Exp: 12},
+		DestAddr:   common.Address{},
+		AccountID:  1,
+		ValidSince: 1607601718,
+		Fee:        types.PackedFee{Mantisa: 3, Exp: 2},
+		WithdrawID: 0,
+	}, testsample.PublicKeys[0])
+	fmt.Println(hexutil.Encode(ReverseBitsForEachByte(msg[:32])), hexutil.Encode(test.Txs[6].PubData))
+	require.Equal(t, msg[:32], ReverseBitsForEachByte(test.Txs[6].PubData))
 }

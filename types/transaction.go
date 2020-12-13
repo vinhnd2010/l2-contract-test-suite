@@ -36,8 +36,8 @@ var (
 
 /// 10 bit for mantisa, 6 bit for
 type PackedFee struct {
-	Mantisa uint16 `json:"mantisa"`
-	Exp     uint8  `json:"fee"`
+	Mantisa uint16 `json:"mantisa,string"`
+	Exp     uint8  `json:"fee,string"`
 }
 
 // 10 bit for mantisa, 6 bit for exp
@@ -61,8 +61,8 @@ func (f *PackedFee) MarshalText() ([]byte, error) {
 
 /// @dev 32 bits for mantisa, 8 bits for exp
 type PackedAmount struct {
-	Mantisa uint32 `json:"mantissa"`
-	Exp     uint8  `json:"exp"`
+	Mantisa uint32 `json:"mantissa,string"`
+	Exp     uint8  `json:"exp,string"`
 }
 
 func (a *PackedAmount) ToBytes() []byte {
