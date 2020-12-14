@@ -16,10 +16,13 @@ import (
 )
 
 const (
-	commitmentBuilderTest1Output    = "testdata/commitmentBuilder1.json"
-	commitmentBuilderTest2Output    = "testdata/commitmentBuilder2.json"
+	commitmentBuilderTest1Output = "testdata/commitmentBuilder1.json"
+	commitmentBuilderTest2Output = "testdata/commitmentBuilder2.json"
+	commitmentBuilderTest3Output = "testdata/commitmentBuilder3.json"
+
 	commitmentFraudProofTest1Output = "testdata/commitmentFraudProof1.json"
 	commitmentFraudProofTest2Output = "testdata/commitmentFraudProof2.json"
+	commitmentFraudProofTest3Output = "testdata/commitmentFraudProof3.json"
 )
 
 type CommitmentBuilderTest1 struct {
@@ -39,6 +42,13 @@ type CommitmentBuilderTest2 struct {
 	LooID                   uint64        `json:"looID"`
 	LooSrcToken             uint16        `json:"looSrcToken"`
 	LooDstToken             uint16        `json:"looDstToken"`
+}
+
+type CommitmentBuilderTest3 struct {
+	TxData                  hexutil.Bytes `json:"txData"`
+	ExpectedCommitmentInput hexutil.Bytes `json:"commitmentInput"`
+	AccountID               uint32        `json:"accountID"`
+	AccountPubKey           hexutil.Bytes `json:"accountPubKey"`
 }
 
 func testCommitmentBuilder1() {
@@ -109,6 +119,36 @@ func testCommitmentBuilder2() {
 		panic(err)
 	}
 	if err := ioutil.WriteFile(commitmentBuilderTest2Output, b, 0644); err != nil {
+		panic(err)
+	}
+}
+
+func testCommitmentBuilder3() {
+	withdraw := &types.WithdrawOp{
+		TokenID:    7,
+		Amount:     types.PackedAmount{Mantisa: 314, Exp: 2},
+		DestAddr:   common.HexToAddress("0x85E456C9AA9e8d6f1DF6E1aae6496b25b157634F"),
+		AccountID:  13,
+		ValidSince: 1607871567,
+		Fee:        types.PackedFee{Mantisa: 5, Exp: 4},
+	}
+
+	data := blockchain.BuildWithdrawZkMsg(withdraw, testsample.PublicKeys[7])
+
+	var err error
+	var testSuits = []CommitmentBuilderTest3{
+		{
+			TxData:                  withdraw.ToBytes(),
+			ExpectedCommitmentInput: data,
+			AccountID:               withdraw.AccountID,
+			AccountPubKey:           testsample.PublicKeys[7],
+		},
+	}
+	b, err := json.MarshalIndent(testSuits, "", "  ")
+	if err != nil {
+		panic(err)
+	}
+	if err := ioutil.WriteFile(commitmentBuilderTest3Output, b, 0644); err != nil {
 		panic(err)
 	}
 }
@@ -328,9 +368,110 @@ func buildCommitmentFraudProofTest2() {
 	}
 }
 
+var genesis3 = &blockchain.Genesis{
+	AccountAlloc: map[uint32]blockchain.GenesisAccount{
+		0: {
+			Tokens:  map[uint16]*big.Int{},
+			Pubkey:  testsample.PublicKeys[1],
+			Address: common.HexToAddress("0xdC70a72AbF352A0E3f75d737430EB896BA9Bf9Ea"),
+		},
+
+		23: {
+			Tokens: map[uint16]*big.Int{
+				0: big.NewInt(2000),
+				2: big.NewInt(45242000),
+			},
+			Pubkey:  testsample.PublicKeys[2],
+			Address: common.HexToAddress("0x99aF5AF1f1a61FE1678e030916f79331a28A57E8"),
+		},
+		47: {
+			Tokens:  map[uint16]*big.Int{},
+			Pubkey:  testsample.PublicKeys[3],
+			Address: common.HexToAddress("0x052f46FeB45822E7f117536386C51B6Bd3125157"),
+		},
+	},
+	AccountMax: 1000,
+	LooMax:     289,
+	LooAlloc: map[uint64]*types.LeftOverOrder{
+		56: {
+			AccountID:   30,
+			SrcToken:    2,
+			DestToken:   1,
+			Amount:      big.NewInt(4321),
+			Fee:         big.NewInt(600),
+			Rate:        types.PackedAmount{Mantisa: 4, Exp: 18}.Big(),
+			ValidSince:  1601436626,
+			ValidPeriod: 823000,
+		},
+		243: {
+			AccountID:   17,
+			SrcToken:    1,
+			DestToken:   2,
+			Amount:      big.NewInt(34500),
+			Fee:         big.NewInt(67432),
+			Rate:        types.PackedAmount{Mantisa: 2, Exp: 17}.Big(),
+			ValidSince:  1601436627,
+			ValidPeriod: 823000,
+		},
+	},
+}
+
+func buildCommitmentFraudProofTest3() {
+	bc := blockchain.NewBlockchain(genesis3)
+	genesisHash := bc.GetStateData().Hash()
+	// create an withdraw to another user
+	withdraw := &types.WithdrawOp{
+		TokenID:    2,
+		Amount:     types.PackedAmount{Mantisa: 4, Exp: 7},
+		DestAddr:   common.HexToAddress("0x99aF5AF1f1a61FE1678e030916f79331a28A57E8"),
+		AccountID:  23,
+		ValidSince: 0,
+		Fee:        types.PackedFee{Mantisa: 1, Exp: 2},
+	}
+	miniBlock := &types.MiniBlock{
+		Txs: []types.Transaction{
+			withdraw,
+		},
+	}
+	bc.AddMiniBlock(miniBlock)
+	submitBlockStep := test.SubmitBlockStep{
+		BlockNumber: 1,
+		MiniBlocks:  []*types.MiniBlock{miniBlock},
+		Timestamp:   1600661872,
+	}
+
+	commitmentFPStep := test.AccuseCommitmentFraudProofStep{
+		BlockNumber:      1,
+		MiniBlockNumber:  0,
+		MiniBlock:        miniBlock,
+		PostStateData:    bc.GetStateData(),
+		MiniBlockProof:   proof.BuildMiniBlockProof(submitBlockStep.MiniBlocks, 0, submitBlockStep.Timestamp),
+		CommitmentProofs: []hexutil.Bytes{bc.BuildCommitmentProof(miniBlock)},
+	}
+	var testSuits = []*test.Suit{
+		{
+			Msg:              "test commitment fraud proof for withdrawing",
+			GenesisStateHash: genesisHash,
+			Steps: []test.Step{
+				{Action: test.SubmitBlock, Data: submitBlockStep},
+				{Action: test.AccuseCommitmentFraudProof, Data: commitmentFPStep},
+			},
+		},
+	}
+	b, err := json.MarshalIndent(testSuits, "", "  ")
+	if err != nil {
+		panic(err)
+	}
+	if err := ioutil.WriteFile(commitmentFraudProofTest3Output, b, 0644); err != nil {
+		panic(err)
+	}
+}
+
 func main() {
-	testCommitmentBuilder1()
-	testCommitmentBuilder2()
-	buildCommitmentFraudProofTest1()
-	buildCommitmentFraudProofTest2()
+	//testCommitmentBuilder1()
+	//testCommitmentBuilder2()
+	//testCommitmentBuilder3()
+	//buildCommitmentFraudProofTest1()
+	//buildCommitmentFraudProofTest2()
+	buildCommitmentFraudProofTest3()
 }

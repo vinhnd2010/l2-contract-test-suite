@@ -216,7 +216,17 @@ func (bc *Blockchain) BuildCommitmentProof(block *types.MiniBlock) hexutil.Bytes
 			proof = append(proof, loo.Bytes()...)
 			proof = append(proof, util.Uint48ToBytes(obj.LooID1)...)
 			proof = appendSiblings(proof, looSiblings)
-			//TODO: add more case for withdraw
+		case *types.WithdrawOp:
+			account := bc.state.accounts[obj.AccountID]
+			if account == nil {
+				panic("account not found")
+			}
+			proof = append(proof, util.Uint32ToBytes(obj.AccountID)...)
+			proof = append(proof, account.pubKey...)
+			proof = append(proof, account.withdrawTo.Bytes()...)
+			proof = append(proof, account.tree.RootHash().Bytes()...)
+			_, accountSiblings := bc.state.tree.GetProof(uint64(obj.AccountID))
+			proof = appendSiblings(proof, accountSiblings)
 		}
 	}
 

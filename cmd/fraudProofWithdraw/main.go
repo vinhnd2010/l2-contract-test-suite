@@ -28,7 +28,7 @@ var genesis = &blockchain.Genesis{
 				0: big.NewInt(2000),
 			},
 			Pubkey:  testsample.PublicKeys[2],
-			Address: common.HexToAddress("0xdC70a72AbF352A0E3f75d737430EB896BA9Bf9Ea"),
+			Address: common.HexToAddress("0x99aF5AF1f1a61FE1678e030916f79331a28A57E8"),
 		},
 		47: {
 			Tokens:  map[uint16]*big.Int{},

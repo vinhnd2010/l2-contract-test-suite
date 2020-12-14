@@ -95,7 +95,8 @@ func (bc *Blockchain) AddMiniBlock(block *types.MiniBlock) []hexutil.Bytes {
 			commitmentInput = append(commitmentInput, bc.buildSettlement1ZkMsg(obj)...)
 		case *types.Settlement2:
 			commitmentInput = append(commitmentInput, bc.buildSettlement2ZkMsg(obj)...)
-		//TODO build test case for withdraw
+		case *types.WithdrawOp:
+			commitmentInput = append(commitmentInput, bc.buildWithdrawZkMsg(obj)...)
 		default: // append 128 default bytes
 			for i := 0; i < 128; i++ {
 				commitmentInput = append(commitmentInput, 0)
@@ -392,7 +393,8 @@ func (bc *Blockchain) handleWithdraw(op *types.WithdrawOp) (proof hexutil.Bytes,
 	_, accountSiblings := bc.state.tree.GetProof(uint64(op.AccountID))
 	proof = appendSiblings(proof, accountSiblings)
 	pubAccountHash := account.GetPubAccountHash()
-	proof = append(proof, pubAccountHash.Bytes()...)
+	proof = append(proof, account.pubKey...)
+	proof = append(proof, account.withdrawTo.Bytes()...)
 	// update account tree
 	tokenAmount, tokenSiblings := account.tree.GetProof(uint64(op.TokenID))
 	proof = appendTokenProof(proof, tokenAmount, tokenSiblings)
