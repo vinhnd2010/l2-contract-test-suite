@@ -17,7 +17,7 @@ const StateTreeDeep = 33
 const LOOTreeDeep = 45
 const FeeTokenIndex = 0
 const AdminIndex uint32 = 0
-const NumTxPerBLock = 4
+const NumTxPerBLock = 8
 
 type Blockchain struct {
 	state       *State

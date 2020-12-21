@@ -19,12 +19,12 @@ func BuildSettlement1ZkMsg(op *types.Settlement1,
 	)
 	msg1 := buildZkMsg(op.Account1, op.Token1, op.Token2, op.Amount1, op.Rate1,
 		op.ValidSince1, op.ValidPeriod1, op.Fee1, op.OpType == types.SettlementOp11)
-	out = append(out, ReverseBitsForEachByte(msg1)...)
+	out = append(out, msg1...)
 	out = append(out, ReverseBytes(account1PubKey)...)
 
 	msg2 := buildZkMsg(op.Account2, op.Token2, op.Token1, op.Amount2, op.Rate2,
 		op.ValidSince2, op.ValidPeriod2, op.Fee2, op.OpType != types.SettlementOp13)
-	out = append(out, ReverseBitsForEachByte(msg2)...)
+	out = append(out, msg2...)
 	out = append(out, ReverseBytes(account2PubKey)...)
 	return out
 }
@@ -36,7 +36,7 @@ func BuildSettlement2ZkMsg(op *types.Settlement2,
 	)
 	msg1 := buildZkMsg(op.AccountID2, looDstToken, looSrcToken, op.Amount2, op.Rate2,
 		op.ValidSince2, op.ValidPeriod2, op.Fee2, op.OpType == types.SettlementOp21)
-	out = append(out, ReverseBitsForEachByte(msg1)...)
+	out = append(out, msg1...)
 	out = append(out, ReverseBytes(accountPubKey)...)
 
 	// append the rest
@@ -147,7 +147,7 @@ func BuildWithdrawZkMsg(op *types.WithdrawOp, accountPubKey hexutil.Bytes) []byt
 		msg = append(msg, 0)
 	}
 
-	out = append(out, ReverseBitsForEachByte(msg)...)
+	out = append(out, msg...)
 	out = append(out, ReverseBytes(accountPubKey)...)
 	// append the rest
 	for len(out) < 128 {

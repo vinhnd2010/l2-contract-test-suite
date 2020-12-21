@@ -468,10 +468,10 @@ func buildCommitmentFraudProofTest3() {
 }
 
 func main() {
-	//testCommitmentBuilder1()
-	//testCommitmentBuilder2()
-	//testCommitmentBuilder3()
-	//buildCommitmentFraudProofTest1()
-	//buildCommitmentFraudProofTest2()
+	testCommitmentBuilder1()
+	testCommitmentBuilder2()
+	testCommitmentBuilder3()
+	buildCommitmentFraudProofTest1()
+	buildCommitmentFraudProofTest2()
 	buildCommitmentFraudProofTest3()
 }

@@ -2,7 +2,6 @@ package blockchain
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"math/big"
 	"testing"
@@ -28,8 +27,9 @@ type Order struct {
 }
 
 type TestCommitment struct {
-	MiniBlockPubData []byte `json:"miniblock_pubdata"`
-	FinalCommitment  string `json:"miniblock_commitmemt"`
+	AccountPubKeys   map[uint64][]byte `json:"account_pubkeys"`
+	MiniBlockPubData []byte            `json:"miniblock_pubdata"`
+	FinalCommitment  string            `json:"miniblock_commitmemt"`
 	Txs              []struct {
 		Order1   Order  `json:"order_1"`
 		Order2   Order  `json:"order_2"`
@@ -48,7 +48,7 @@ func TestBuildZkMsg(t *testing.T) {
 	err = json.Unmarshal(data, &test)
 	require.NoError(t, err)
 
-	tx := test.Txs[3]
+	tx := test.Txs[4]
 	order1 := tx.Order1
 	order2 := tx.Order2
 
@@ -86,92 +86,85 @@ func Test_Commitment(t *testing.T) {
 	err = json.Unmarshal(data, &test)
 	require.NoError(t, err)
 
-	bc := NewBlockchain(genesis)
-
-	amount0, _ := new(big.Int).SetString("12000000000000000000", 10)
-	miniBlock1 := &types.MiniBlock{
-		Txs: []types.Transaction{
-			&types.DepositToNewOp{
-				PubKey:     hexutil.MustDecode("0xcabf7cd1c1e7954f9d1faf98d604f8cb4772f7c57c9335ad7d16c75a017fc82b"),
-				WithdrawTo: common.HexToAddress("0x227b87530bc03015ad5a405d83f3d2f4c5832d12"),
-				TokenID:    6,
-				Amount:     big.NewInt(100000000000000000),
-			}, &types.DepositToNewOp{
-				PubKey:     hexutil.MustDecode("0xb60b26f03aa6f2c129f1e4f713965e6ac485fb1e8a1fe91c1399af5df3ff4e09"),
-				WithdrawTo: common.HexToAddress("0x320849ec0adffcd6fb0212b59a2ec936cdef5fca"),
-				TokenID:    6,
-				Amount:     big.NewInt(98000000000000000),
-			}, &types.DepositOp{
-				AccountID: 1,
-				TokenID:   0,
-				Amount:    amount0,
-			}, &types.Settlement1{
-				OpType:   types.SettlementOp11,
-				Token1:   0,
-				Token2:   6,
-				Account1: 1,
-				Account2: 2,
-				Amount1:  types.PackedAmount{Mantisa: 3, Exp: 18},
-				Rate1:    types.PackedAmount{Mantisa: 2, Exp: 16},
-
-				Amount2:      types.PackedAmount{Mantisa: 2, Exp: 16},
-				Rate2:        types.PackedAmount{Mantisa: 5, Exp: 19},
-				Fee1:         types.PackedFee{Mantisa: 0, Exp: 0},
-				Fee2:         types.PackedFee{Mantisa: 0, Exp: 0},
-				ValidSince1:  1605323933,
-				ValidSince2:  1605323952,
-				ValidPeriod1: 268435455,
-				ValidPeriod2: 268435455,
-			},
-		},
-	}
-	bc.AddMiniBlock(miniBlock1)
-
-	require.Equal(t, miniBlock1.Commitment.Hex()[2:], test.FinalCommitment)
-}
-
-func Test_Commitment2(t *testing.T) {
-	data, err := ioutil.ReadFile("../../testdata/miniblock2.json")
-	require.NoError(t, err)
-
-	var test TestCommitment
-	err = json.Unmarshal(data, &test)
-	require.NoError(t, err)
-
-	fmt.Println(len(test.MiniBlockPubData))
-
-	/*
-
-		/// not equal due to valid period
-
-		tx:= test.Txs[5]
-		order1 := test.Txs[5].Order
-		msg := buildZkMsg(order1.AccountID, order1.SrcTokenID, order1.DstTokenID, order1.Amount, order1.Rate,
-			order1.ValidSince, order1.ValidPeriod, order1.Fee, order1.CouldBePartiallyFilled,
-		)
-
-		fmt.Println(hexutil.Encode(tx.PubData), hexutil.Encode(msg))
-		require.Equal(t, tx.PubData, msg)
-	*/
-
-	//for i := 0; i < len(test.MiniBlockPubData); i += 32 {
-	//	fmt.Println(i/32, hexutil.Encode(test.MiniBlockPubData[i:i+32]))
+	//bc := NewBlockchain(genesis)
+	//amount0, _ := new(big.Int).SetString("12000000000000000000", 10)
+	//miniBlock1 := &types.MiniBlock{
+	//	Txs: []types.Transaction{
+	//		&types.DepositToNewOp{
+	//			PubKey:     hexutil.MustDecode("0xcabf7cd1c1e7954f9d1faf98d604f8cb4772f7c57c9335ad7d16c75a017fc82b"),
+	//			WithdrawTo: common.HexToAddress("0x227b87530bc03015ad5a405d83f3d2f4c5832d12"),
+	//			TokenID:    6,
+	//			Amount:     big.NewInt(100000000000000000),
+	//		}, &types.DepositToNewOp{
+	//			PubKey:     hexutil.MustDecode("0xb60b26f03aa6f2c129f1e4f713965e6ac485fb1e8a1fe91c1399af5df3ff4e09"),
+	//			WithdrawTo: common.HexToAddress("0x320849ec0adffcd6fb0212b59a2ec936cdef5fca"),
+	//			TokenID:    6,
+	//			Amount:     big.NewInt(98000000000000000),
+	//		}, &types.DepositOp{
+	//			AccountID: 1,
+	//			TokenID:   0,
+	//			Amount:    amount0,
+	//		}, &types.Settlement1{
+	//			OpType:   types.SettlementOp11,
+	//			Token1:   0,
+	//			Token2:   6,
+	//			Account1: 1,
+	//			Account2: 2,
+	//			Amount1:  types.PackedAmount{Mantisa: 3, Exp: 18},
+	//			Rate1:    types.PackedAmount{Mantisa: 2, Exp: 16},
+	//
+	//			Amount2:      types.PackedAmount{Mantisa: 2, Exp: 16},
+	//			Rate2:        types.PackedAmount{Mantisa: 5, Exp: 19},
+	//			Fee1:         types.PackedFee{Mantisa: 0, Exp: 0},
+	//			Fee2:         types.PackedFee{Mantisa: 0, Exp: 0},
+	//			ValidSince1:  1605323933,
+	//			ValidSince2:  1605323952,
+	//			ValidPeriod1: 268435455,
+	//			ValidPeriod2: 268435455,
+	//		},
+	//	},
 	//}
+	//bc.AddMiniBlock(miniBlock1)
 	//
-	//fmt.Println(common2.Sha256ToHash(test.MiniBlockPubData).Hex())
-	//
-	//fmt.Println(hexutil.Encode(ReverseBitsForEachByte(test.Txs[5].PubData)))
-	//fmt.Println(hexutil.Encode(ReverseBitsForEachByte(test.Txs[6].PubData)))
+	//require.Equal(t, miniBlock1.Commitment.Hex()[2:], test.FinalCommitment)
 
-	msg := BuildWithdrawZkMsg(&types.WithdrawOp{
+	out := BuildSettlement1ZkMsg(&types.Settlement1{
+		OpType:   types.SettlementOp11,
+		Token1:   0,
+		Token2:   6,
+		Account1: 1,
+		Account2: 2,
+		Amount1:  types.PackedAmount{Mantisa: 3, Exp: 18},
+		Rate1:    types.PackedAmount{Mantisa: 2, Exp: 16},
+
+		Amount2:      types.PackedAmount{Mantisa: 2, Exp: 16},
+		Rate2:        types.PackedAmount{Mantisa: 5, Exp: 19},
+		Fee1:         types.PackedFee{Mantisa: 0, Exp: 0},
+		Fee2:         types.PackedFee{Mantisa: 0, Exp: 0},
+		ValidSince1:  1605323933,
+		ValidSince2:  1605323952,
+		ValidPeriod1: 268435455,
+		ValidPeriod2: 268435455,
+	}, test.AccountPubKeys[1], test.AccountPubKeys[2])
+	require.Equal(t, hexutil.Encode(out), hexutil.Encode(test.MiniBlockPubData[512:640]))
+
+	out2 := BuildSettlement2ZkMsg(&types.Settlement2{
+		OpType:       types.SettlementOp21,
+		AccountID2:   1,
+		Amount2:      types.PackedAmount{Mantisa: 1, Exp: 12},
+		Rate2:        types.PackedAmount{Mantisa: 2, Exp: 12},
+		Fee2:         types.PackedFee{Mantisa: 0, Exp: 0},
+		ValidSince2:  1605323933,
+		ValidPeriod2: 268435455,
+	}, 6, 0, test.AccountPubKeys[1])
+	require.Equal(t, hexutil.Encode(out2), hexutil.Encode(test.MiniBlockPubData[640:768]))
+
+	outWithdraw := BuildWithdrawZkMsg(&types.WithdrawOp{
+		AccountID:  1,
 		TokenID:    6,
 		Amount:     types.PackedAmount{Mantisa: 1, Exp: 12},
-		DestAddr:   common.Address{},
-		AccountID:  1,
-		ValidSince: 1607601718,
 		Fee:        types.PackedFee{Mantisa: 3, Exp: 2},
-		WithdrawID: 0,
-	}, testsample.PublicKeys[0])
-	fmt.Println(hexutil.Encode(ReverseBitsForEachByte(msg[:32])), hexutil.Encode(test.Txs[6].PubData))
-	require.Equal(t, msg[:32], ReverseBitsForEachByte(test.Txs[6].PubData))
+		ValidSince: 1607601718,
+	}, test.AccountPubKeys[1])
+	require.Equal(t, hexutil.Encode(outWithdraw), hexutil.Encode(test.MiniBlockPubData[768:896]))
 }
